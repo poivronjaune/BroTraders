@@ -1,8 +1,10 @@
 import sys
+import glob
 import pandas as pd
 import json
 from datetime import datetime
 from ib_async import *
+from pprint import pprint
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.strat_gap_rise import strategy
 
@@ -37,7 +39,7 @@ def getdata():
         df.to_csv(f"DATA/{contract.symbol}_1min_{datetime.now().strftime('%Y%m%d_%H%M')}.csv", index=False)
 
     ib.disconnect()
-    
+ 
 
 def getreport():
     ib = IB()
@@ -97,7 +99,11 @@ def signals():
     prospects = load_tickers()
     buy_signals = []
     for prospect in prospects:
-        df = pd.read_csv(f'DATA/{prospect}_1min_20260416_1531.csv')
+        csv_files = glob.glob(f"DATA/{prospect}_1min_*.csv")
+        if len(csv_files) > 0:
+            df = pd.read_csv(csv_files[0])
+        else:
+            continue
         # TODO: Add error handling
         buy_signal = strategy(prospect, df, gap_threshold=10.0)
         
@@ -106,9 +112,24 @@ def signals():
         
         buy_signals.append(buy_signal)
 
-    for signal in buy_signals:
-        print(f"Buy Signal: {signal['symbol']} - Gap: {signal['gap']:.2f}, Gap Percentage: {signal['gap_perc']:.2f}%")
+    with open('DATA/buy_signals.json', 'w') as f:
+        json.dump(buy_signals, f, indent=4)
+    #pprint(buy_signals, sort_dicts=False)
+    #for signal in buy_signals:
+    #    print(f"Buy Signal: {signal['symbol']} - Gap: {signal['gap']:.2f}, Gap Percentage: {signal['gap_perc']:.2f}%")
     
+def place_trades():
+    # Open signals file
+    # Calculate entry price, stop loss price and target price
+    # Place order with IB API
+    # Fire and Forget 
+    pass   
+
+def track_portfolio():
+    # get IBKR Open Positions
+    # get IBKR trades for the day ?
+    # Log trades with P&L in a csv file
+    pass
 
 def main():
     print("Hello, BroTools!")

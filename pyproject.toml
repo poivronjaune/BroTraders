@@ -16,7 +16,8 @@ license = {text = "MIT"}
 dependencies = [
     # "/TWS API/source/pythonclient", # This installs protobuf, which is a dependency of ibapi
     "pandas",
-    "ib_async"
+    "ib_async",
+    "pytz"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -32,3 +33,5 @@ packages = ["brotools"]
 report = "brotools.__main__:getreport"
 getdata = "brotools.__main__:getdata"
 signals = "brotools.__main__:signals"
+trade = "brotools.__main__:place_trade"
+track = "brotools.__main__:track_portfolio"
