@@ -6,7 +6,6 @@ import json
 import pandas as pd
 
 from datetime import datetime
-#from ib_async import contract, ib
 from ib_async import *
 from pprint import pprint
 
@@ -22,72 +21,111 @@ def load_tickers():
     
     return tickers
 
-def getdata():
+async def get_data_async():
     ib = IB()
-    ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+    try:
+        # 1. Connect ONCE using the async method
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
-    tickers = load_tickers()
-    for ticker in tickers:
-        contract = Stock(ticker, "SMART", "USD")                    # Step 1 : Define a contract object for which to fetch data (stocks in this case)
+        tickers = load_tickers()
         
-        bars = ib.reqHistoricalData(                                # Step 2 : request historical data for the last day in 1 minute bars (limitations apply, 1 minute => about 1 month)
-            contract,
-            endDateTime="",
-            durationStr="2 D",
-            barSizeSetting="1 min",
-            whatToShow="TRADES",
-            useRTH=False                                            # When useRTH is False, get Extended Hours and PreMarket data
-        )    
+        for ticker in tickers:
+            # Check if ticker is a conId (int) or symbol (str) based on our previous talk
+            if isinstance(ticker, int):
+                contract = Stock(conId=ticker)
+            else:
+                contract = Stock(ticker, "SMART", "USD")
 
-        #print(bars)
-        df = util.df(bars)
-        df.to_csv(f"DATA/{contract.symbol}_1min_{datetime.now().strftime('%Y%m%d_%H%M')}.csv", index=False)
+            # 2. Qualify the contract to ensure we have the right details
+            await ib.qualifyContractsAsync(contract)
+            print(f"Fetching data for {contract.symbol}...")
 
-    ib.disconnect()
- 
+            # 3. Use the Async version of historical data request
+            bars = await ib.reqHistoricalDataAsync(
+                contract,
+                endDateTime="",
+                durationStr="2 D",
+                barSizeSetting="1 min",
+                whatToShow="TRADES",
+                useRTH=False  # Crucial for Gaps: gets Pre-Market data
+            )
+
+            if bars:
+                df = util.df(bars)
+                filename = f"DATA/{contract.symbol}_1min_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+                df.to_csv(filename, index=False)
+                print(f"Saved {len(bars)} rows to {filename}")
+            else:
+                print(f"No data returned for {contract.symbol}")
+
+            # 4. Small sleep to avoid hitting IBKR pacing violations
+            await asyncio.sleep(0.1)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        # 5. Always disconnect in the finally block
+        ib.disconnect()
+
+def getdata():
+    asyncio.run(get_data_async())
+
+
+async def get_report_async():
+    ib = IB()
+    try:
+        # 1. Use connectAsync
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+
+        #sub = ScannerSubscription(
+        #    numberOfRows=30,
+        #    instrument='STK',
+        #    locationCode='STK.NASDAQ',
+        #    #scanCode='TOP_PERC_GAIN',
+        #    scanCode='HIGH_OPEN_GAP',
+        #    abovePrice=2,
+        #    belowPrice=20,
+        #    aboveVolume=10000000)
+        sub = ScannerSubscription()
+        sub.numberOfRows = 50
+        sub.instrument   = 'STK'
+        sub.locationCode = 'STK.NASDAQ'
+        #sub.scanCode    = 'TOP_PERC_GAIN'        
+        sub.scanCode     = 'HIGH_OPEN_GAP'
+        sub.abovePrice   = 20
+        sub.belowPrice   = 1000
+        #sub.aboveVolume    = 1000000    # 1 Millions transactions
+        #sub.marketCapAbove = 300        # Small Market Capitalisation and above
+        #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
+
+        # 2. Use reqScannerDataAsync to wait for the results
+        print("Requesting scanner data...")
+        scanData = await ib.reqScannerDataAsync(sub)    
+
+        results = [
+            {
+                "rank": d.rank,
+                "conId": d.contractDetails.contract.conId,
+                "symbol": d.contractDetails.contract.symbol,
+                "localSymbol": d.contractDetails.contract.localSymbol,
+                "tradingClass": d.contractDetails.contract.tradingClass
+            }
+            for d in scanData
+        ]
+        
+        # 3. Save to file
+        with open('DATA/results.json', 'w') as f:
+            json.dump(results, f, indent=4)
+            
+        print(f"Success: {len(results)} items saved to DATA/results.json")
+    except Exception as e:
+        print(f"Error during scan: {e}")
+    finally:
+        # 4. Always disconnect
+        ib.disconnect()    
 
 def getreport():
-    ib = IB()
-    ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-    #sub = ScannerSubscription(
-    #    numberOfRows=30,
-    #    instrument='STK',
-    #    locationCode='STK.NASDAQ',
-    #    #scanCode='TOP_PERC_GAIN',
-    #    scanCode='HIGH_OPEN_GAP',
-    #    abovePrice=2,
-    #    belowPrice=20,
-    #    aboveVolume=10000000)
-    sub = ScannerSubscription()
-    sub.numberOfRows   = 50
-    sub.instrument     = 'STK'
-    sub.locationCode   = 'STK.NASDAQ'
-    #sub.scanCode       = 'TOP_PERC_GAIN'
-    sub.scanCode       = 'HIGH_OPEN_GAP'
-    sub.abovePrice     = 20
-    sub.belowPrice     = 1000
-    #sub.aboveVolume    = 1000000    # 1 Millions transactions
-    #sub.marketCapAbove = 300        # Small Market Capitalisation and above
-    #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)
-
-    scanData = ib.reqScannerData(sub)    
-
-    results = [
-        {
-            "rank": d.rank,
-            "conId": d.contractDetails.contract.conId,
-            "symbol": d.contractDetails.contract.symbol,
-            "localSymbol": d.contractDetails.contract.localSymbol,
-            "tradingClass": d.contractDetails.contract.tradingClass
-        }
-        for d in scanData
-    ]
-    
-    with open('DATA/results.json', 'w') as f:
-        json.dump(results, f, indent=4)
-
-    ib.disconnect()
+    asyncio.run(get_report_async())
 
 
 def signals():
