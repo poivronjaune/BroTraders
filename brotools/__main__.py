@@ -1,10 +1,15 @@
 import sys
+import time
 import glob
-import pandas as pd
+import asyncio
 import json
+import pandas as pd
+
 from datetime import datetime
+#from ib_async import contract, ib
 from ib_async import *
 from pprint import pprint
+
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.strat_gap_rise import strategy
 
@@ -78,12 +83,9 @@ def getreport():
         }
         for d in scanData
     ]
-
+    
     with open('DATA/results.json', 'w') as f:
         json.dump(results, f, indent=4)
-    #print(json.dumps(results, indent=4))
-    # for scan in results:
-    #     print(scan)
 
     ib.disconnect()
 
@@ -114,16 +116,73 @@ def signals():
 
     with open('DATA/buy_signals.json', 'w') as f:
         json.dump(buy_signals, f, indent=4)
-    #pprint(buy_signals, sort_dicts=False)
-    #for signal in buy_signals:
-    #    print(f"Buy Signal: {signal['symbol']} - Gap: {signal['gap']:.2f}, Gap Percentage: {signal['gap_perc']:.2f}%")
+
+
+def create_bracket_order(qte, estimated_buy_price):
+    # Build a bracket order to be called with a contract later in the code
+    # use a small sleep() delay since we are in synchronous mode
+    #parent = LimitOrder('BUY', qte, limit_price)
+    parent = MarketOrder('BUY', 1, tif='GTC', transmit=False)
+    # parent.orderId = ib.client.getReqId()
+    
+    # Stop loss
+    stop_price = round(estimated_buy_price * 0.98, 2)
+    stopLoss = StopOrder('SELL', qte, stop_price, tif='GTC', transmit = False)
+
+    # Take profit
+    target_price = round(estimated_buy_price * 1.05, 2)
+    takeProfit = LimitOrder('SELL', qte, target_price, tif='GTC', transmit = True)
+
+    return parent, stopLoss, takeProfit
+
+   
+async def place_trades_async():
+    ib = IB()
+    try:
+        # 1. Connect ONCE outside the loop
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+
+        df_signals = pd.read_json('DATA/buy_signals.json')
+        df_signals = df_signals[df_signals['threshold_reached'] == True]
+        
+        for index, signal in df_signals.iterrows():
+            contract = Stock(signal['symbol'], 'SMART', 'USD')
+            
+            # 2. Qualify the contract (Crucial for ib_async)
+            await ib.qualifyContractsAsync(contract)
+            
+            qte = 1
+            estimated_buy_price = round(signal['open_curr'], 2)
+            
+            # 3. Build orders
+            parent, stop_loss, take_profit = create_bracket_order(qte, estimated_buy_price)
+            
+            # 4. Place parent first to generate its orderId
+            ib.placeOrder(contract, parent)
+            
+            # Link children to parentId
+            stop_loss.parentId = parent.orderId
+            take_profit.parentId = parent.orderId
+            
+            # Place children
+            ib.placeOrder(contract, stop_loss)
+            ib.placeOrder(contract, take_profit)
+            
+            # Small async sleep to let the event loop process network traffic
+            await asyncio.sleep(0.5)
+            
+            print(f"✅ Bracket submitted for {signal['symbol']} (Parent ID: {parent.orderId})")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+    finally:
+        # 5. Disconnect AFTER all loop iterations are done
+        ib.disconnect()
     
 def place_trades():
-    # Open signals file
-    # Calculate entry price, stop loss price and target price
-    # Place order with IB API
-    # Fire and Forget 
-    pass   
+    asyncio.run(place_trades_async())
+
+   
 
 def track_portfolio():
     # get IBKR Open Positions
@@ -131,6 +190,18 @@ def track_portfolio():
     # Log trades with P&L in a csv file
     pass
 
+def close_positions():
+    ib = IB()
+    ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+    
+    # --- Cancel all open orders ---
+    open_orders = ib.openOrders()
+    for o in open_orders:
+        ib.cancelOrder(o)
+        print(f"Cancelled order: {o.action} {o.totalQuantity} {o.orderType}")    
+    
+    ib.disconnect()
+    
 def main():
     print("Hello, BroTools!")
     print("This is the main entry point of the application.")

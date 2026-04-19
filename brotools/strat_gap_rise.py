@@ -24,6 +24,7 @@ def get_currday_open(df):
         return df_curr['open'].iloc[0], date_curr
     except Exception as e:
         return None, None
+
     
 def strategy(prospect,df, gap_threshold=10.0):
     buy_signal = None 
@@ -42,6 +43,8 @@ def strategy(prospect,df, gap_threshold=10.0):
         is_treshhold_reached = True
     else:        
         is_treshhold_reached = False
+
+
 
     buy_signal = {
         "symbol": prospect,
