@@ -17,11 +17,12 @@ def get_currday_open(df):
         df_filtered = pd.to_datetime(df['date']).dt.date == date_curr
         df1 = df[df_filtered]
         df_curr = df1[pd.to_datetime(df1['date']).dt.hour >= 9]
-        df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.hour < 10]
+        # df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.hour < 10]
         # take rows greater than 9:30 
         df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.minute >= 30]
 
-        return df_curr['open'].iloc[0], date_curr
+        return  df_curr['open'].iloc[-1], date_curr
+        #return df_curr['open'].iloc[0], date_curr
     except Exception as e:
         return None, None
 

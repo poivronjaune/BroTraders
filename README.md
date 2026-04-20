@@ -8,7 +8,7 @@ Open a terminal and issue the following commands:
 | report  | Launch a scan report from IBKR to get 50 Gappers (launch at 9:30) | results.json     |
 | getdata | Extract data from **results.json** file with minute price data    | many csv files   |
 | signals | Generate buy signals from strategy (Morning GAP > 10%)            | buy_signals.json |
-| trade   | Place bracket orders (market, stop, profit) for signals produced  | Trades in TWS    |
+| orders  | Place bracket orders (market, stop, profit) for signals produced  | Orders in TWS    |
 
 
 # Installation  

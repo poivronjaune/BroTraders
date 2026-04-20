@@ -33,6 +33,6 @@ packages = ["brotools"]
 report = "brotools.__main__:getreport"
 getdata = "brotools.__main__:getdata"
 signals = "brotools.__main__:signals"
-trade = "brotools.__main__:place_trades"
+orders = "brotools.__main__:place_orders"
 track = "brotools.__main__:track_portfolio"
 close = "brotools.__main__:close_positions"

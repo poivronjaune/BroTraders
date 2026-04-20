@@ -1,0 +1,72 @@
+[
+    {
+        "rank": 0,
+        "conId": 73342855,
+        "symbol": "MXL",
+        "localSymbol": "MXL",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 1,
+        "conId": 425569443,
+        "symbol": "LEGN",
+        "localSymbol": "LEGN",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 2,
+        "conId": 789862827,
+        "symbol": "NKTR",
+        "localSymbol": "NKTR",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 3,
+        "conId": 74820280,
+        "symbol": "AOSL",
+        "localSymbol": "AOSL",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 4,
+        "conId": 263975426,
+        "symbol": "ANAB",
+        "localSymbol": "ANAB",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 5,
+        "conId": 845309190,
+        "symbol": "PLUL",
+        "localSymbol": "PLUL",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 6,
+        "conId": 498661851,
+        "symbol": "GHRS",
+        "localSymbol": "GHRS",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 7,
+        "conId": 865203888,
+        "symbol": "HIMZ",
+        "localSymbol": "HIMZ",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 8,
+        "conId": 40673933,
+        "symbol": "CAR",
+        "localSymbol": "CAR",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 9,
+        "conId": 799369418,
+        "symbol": "MGRT",
+        "localSymbol": "MGRT",
+        "tradingClass": "SCM"
+    }
+]

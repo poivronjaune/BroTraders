@@ -8,6 +8,8 @@ import pandas as pd
 from datetime import datetime
 from ib_async import *
 from pprint import pprint
+from dataclasses import asdict # ib_async objects are often dataclasses so they can be easily converted to dicts for JSON serialization
+from decimal import Decimal
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.strat_gap_rise import strategy
@@ -87,15 +89,15 @@ async def get_report_async():
         #    belowPrice=20,
         #    aboveVolume=10000000)
         sub = ScannerSubscription()
-        sub.numberOfRows = 50
+        sub.numberOfRows = 10
         sub.instrument   = 'STK'
         sub.locationCode = 'STK.NASDAQ'
         #sub.scanCode    = 'TOP_PERC_GAIN'        
         sub.scanCode     = 'HIGH_OPEN_GAP'
-        sub.abovePrice   = 20
-        sub.belowPrice   = 1000
-        #sub.aboveVolume    = 1000000    # 1 Millions transactions
-        #sub.marketCapAbove = 300        # Small Market Capitalisation and above
+        sub.abovePrice   = 10
+        sub.belowPrice   = 200
+        sub.aboveVolume  = 1000000       # 1 Millions transactions
+        sub.marketCapAbove = 300         # Small Market Capitalisation and above
         #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
 
         # 2. Use reqScannerDataAsync to wait for the results
@@ -173,9 +175,65 @@ def create_bracket_order(qte, estimated_buy_price):
 
     return parent, stopLoss, takeProfit
 
+
+def save_orders_to_json(orders_list, filename='DATA/submitted_orders.json'):
+    """Converts ib_async Order objects to dictionaries and saves to JSON."""
+    
+    def decimal_default(obj):
+        if isinstance(obj, Decimal):
+            return float(obj) # Convert Decimals to floats for JSON compatibility
+        raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+    serializable_orders = []
+    for order_group in orders_list:
+        p = asdict(order_group["parent"])
+        s = asdict(order_group["stop_loss"])
+        t = asdict(order_group["take_profit"])
+
+        entry = {
+            # parent
+            "p_orderId": p["orderId"],
+            "p_action": p["action"],
+            "p_totalQuantity": p["totalQuantity"],
+            "p_orderType": p["orderType"],
+            "p_lmtPrice": p["lmtPrice"],
+            "p_auxPrice": p["auxPrice"],
+            "p_tif": p["tif"],
+            "p_outsideRth": p["outsideRth"],
+
+            # stop loss
+            "s_orderId": s["orderId"],
+            "s_action": s["action"],
+            "s_totalQuantity": s["totalQuantity"],
+            "s_orderType": s["orderType"],
+            "s_lmtPrice": s["lmtPrice"],
+            "s_auxPrice": s["auxPrice"],
+            "s_tif": s["tif"],
+            "s_parentId": s["parentId"],
+            "s_outsideRth": s["outsideRth"],
+
+            # take profit
+            "t_orderId": t["orderId"],
+            "t_action": t["action"],
+            "t_totalQuantity": t["totalQuantity"],
+            "t_orderType": t["orderType"],
+            "t_lmtPrice": t["lmtPrice"],
+            "t_auxPrice": t["auxPrice"],
+            "t_tif": t["tif"],
+            "t_parentId": t["parentId"],
+            "t_outsideRth": t["outsideRth"],
+        }
+
+        serializable_orders.append(entry)
+    
+    with open(filename, 'w') as f:
+        json.dump(serializable_orders, f, indent=4, default=decimal_default)
+    print(f"📂 Saved {len(orders_list)} order brackets to {filename}")
+    
    
-async def place_trades_async():
+async def place_orders_async():
     ib = IB()
+    orders = []
     try:
         # 1. Connect ONCE outside the loop
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
@@ -206,6 +264,9 @@ async def place_trades_async():
             ib.placeOrder(contract, stop_loss)
             ib.placeOrder(contract, take_profit)
             
+            order = {"parent": parent, "stop_loss": stop_loss, "take_profit": take_profit}
+            orders.append(order)
+                    
             # Small async sleep to let the event loop process network traffic
             await asyncio.sleep(0.5)
             
@@ -216,9 +277,12 @@ async def place_trades_async():
     finally:
         # 5. Disconnect AFTER all loop iterations are done
         ib.disconnect()
+        if len(orders) > 0:
+            save_orders_to_json(orders)
     
-def place_trades():
-    asyncio.run(place_trades_async())
+    
+def place_orders():
+    asyncio.run(place_orders_async())
 
    
 

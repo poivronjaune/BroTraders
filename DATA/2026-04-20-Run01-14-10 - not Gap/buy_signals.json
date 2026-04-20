@@ -1,0 +1,112 @@
+[
+    {
+        "symbol": "MXL",
+        "gap": 6.5,
+        "gap_perc": 24.733637747336378,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 26.28,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 32.78,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "LEGN",
+        "gap": 4.52,
+        "gap_perc": 21.361058601134214,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 21.16,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 25.68,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "NKTR",
+        "gap": 17.789999999999992,
+        "gap_perc": 20.9762999646268,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 84.81,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 102.6,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "AOSL",
+        "gap": 6.369999999999997,
+        "gap_perc": 18.812758417011217,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 33.86,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 40.23,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "ANAB",
+        "gap": 4.469999999999999,
+        "gap_perc": 9.93333333333333,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 45.0,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 49.47,
+        "threshold_reached": false
+    },
+    {
+        "symbol": "PLUL",
+        "gap": 3.120000000000001,
+        "gap_perc": 17.90017211703959,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 17.43,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 20.55,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "GHRS",
+        "gap": 3.1099999999999994,
+        "gap_perc": 17.03176341730558,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 18.26,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 21.37,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "HIMZ",
+        "gap": 6.579999999999998,
+        "gap_perc": 15.734098517455758,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 41.82,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 48.4,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "CAR",
+        "gap": 55.72000000000003,
+        "gap_perc": 11.272962693210333,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 494.28,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 550.0,
+        "threshold_reached": true
+    },
+    {
+        "symbol": "MGRT",
+        "gap": 19.22999999999999,
+        "gap_perc": 17.145149786019964,
+        "gap_treshold": 10.0,
+        "date_prev": "2026-04-17 00:00:00",
+        "close_prev": 112.16,
+        "date_curr": "2026-04-20 00:00:00",
+        "open_curr": 131.39,
+        "threshold_reached": true
+    }
+]
