@@ -1,0 +1,352 @@
+[
+    {
+        "rank": 0,
+        "conId": 6478295,
+        "symbol": "HELE",
+        "localSymbol": "HELE",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 1,
+        "conId": 661513,
+        "symbol": "NOK",
+        "localSymbol": "NOK",
+        "tradingClass": "NOK"
+    },
+    {
+        "rank": 2,
+        "conId": 19012089,
+        "symbol": "MOH",
+        "localSymbol": "MOH",
+        "tradingClass": "MOH"
+    },
+    {
+        "rank": 3,
+        "conId": 12460,
+        "symbol": "STM",
+        "localSymbol": "STM",
+        "tradingClass": "STM"
+    },
+    {
+        "rank": 4,
+        "conId": 556067819,
+        "symbol": "APLD",
+        "localSymbol": "APLD",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 5,
+        "conId": 75960201,
+        "symbol": "NEE",
+        "localSymbol": "NEE",
+        "tradingClass": "NEE"
+    },
+    {
+        "rank": 6,
+        "conId": 12325901,
+        "symbol": "RDY",
+        "localSymbol": "RDY",
+        "tradingClass": "RDY"
+    },
+    {
+        "rank": 7,
+        "conId": 500073396,
+        "symbol": "OKLO",
+        "localSymbol": "OKLO",
+        "tradingClass": "OKLO"
+    },
+    {
+        "rank": 8,
+        "conId": 858494169,
+        "symbol": "SUNB",
+        "localSymbol": "SUNB",
+        "tradingClass": "SUNB"
+    },
+    {
+        "rank": 9,
+        "conId": 188520000,
+        "symbol": "AMSC",
+        "localSymbol": "AMSC",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 10,
+        "conId": 6150,
+        "symbol": "CSX",
+        "localSymbol": "CSX",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 11,
+        "conId": 4816415,
+        "symbol": "PENN",
+        "localSymbol": "PENN",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 12,
+        "conId": 8677881,
+        "symbol": "ON",
+        "localSymbol": "ON",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 13,
+        "conId": 271568,
+        "symbol": "MCHP",
+        "localSymbol": "MCHP",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 14,
+        "conId": 452380681,
+        "symbol": "ALGM",
+        "localSymbol": "ALGM",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 15,
+        "conId": 267748,
+        "symbol": "CMCSA",
+        "localSymbol": "CMCSA",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 16,
+        "conId": 860490275,
+        "symbol": "RVI",
+        "localSymbol": "RVI",
+        "tradingClass": "RVI"
+    },
+    {
+        "rank": 17,
+        "conId": 38251658,
+        "symbol": "HLX",
+        "localSymbol": "HLX",
+        "tradingClass": "HLX"
+    },
+    {
+        "rank": 18,
+        "conId": 235248586,
+        "symbol": "WCN",
+        "localSymbol": "WCN",
+        "tradingClass": "WCN"
+    },
+    {
+        "rank": 19,
+        "conId": 848765470,
+        "symbol": "EQPT",
+        "localSymbol": "EQPT",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 20,
+        "conId": 176571182,
+        "symbol": "CCI",
+        "localSymbol": "CCI",
+        "tradingClass": "CCI"
+    },
+    {
+        "rank": 21,
+        "conId": 39921623,
+        "symbol": "TECK",
+        "localSymbol": "TECK",
+        "tradingClass": "TECK"
+    },
+    {
+        "rank": 22,
+        "conId": 466188387,
+        "symbol": "HIMS",
+        "localSymbol": "HIMS",
+        "tradingClass": "HIMS"
+    },
+    {
+        "rank": 23,
+        "conId": 15435308,
+        "symbol": "SNY",
+        "localSymbol": "SNY",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 24,
+        "conId": 324057162,
+        "symbol": "KDP",
+        "localSymbol": "KDP",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 25,
+        "conId": 701518202,
+        "symbol": "NNE",
+        "localSymbol": "NNE",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 26,
+        "conId": 559289446,
+        "symbol": "SMR",
+        "localSymbol": "SMR",
+        "tradingClass": "SMR"
+    },
+    {
+        "rank": 27,
+        "conId": 13508,
+        "symbol": "VLY",
+        "localSymbol": "VLY",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 28,
+        "conId": 73340487,
+        "symbol": "SOXL",
+        "localSymbol": "SOXL",
+        "tradingClass": "SOXL"
+    },
+    {
+        "rank": 29,
+        "conId": 727785544,
+        "symbol": "SIRI",
+        "localSymbol": "SIRI",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 30,
+        "conId": 369218017,
+        "symbol": "OBE",
+        "localSymbol": "OBE",
+        "tradingClass": "OBE"
+    },
+    {
+        "rank": 31,
+        "conId": 253915099,
+        "symbol": "PAGP",
+        "localSymbol": "PAGP",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 32,
+        "conId": 13878278,
+        "symbol": "CNC",
+        "localSymbol": "CNC",
+        "tradingClass": "CNC"
+    },
+    {
+        "rank": 33,
+        "conId": 5270,
+        "symbol": "BSX",
+        "localSymbol": "BSX",
+        "tradingClass": "BSX"
+    },
+    {
+        "rank": 34,
+        "conId": 1447060,
+        "symbol": "CCJ",
+        "localSymbol": "CCJ",
+        "tradingClass": "CCJ"
+    },
+    {
+        "rank": 35,
+        "conId": 6257,
+        "symbol": "CX",
+        "localSymbol": "CX",
+        "tradingClass": "CX"
+    },
+    {
+        "rank": 36,
+        "conId": 613058308,
+        "symbol": "NXT",
+        "localSymbol": "NXT",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 37,
+        "conId": 11398,
+        "symbol": "PAR",
+        "localSymbol": "PAR",
+        "tradingClass": "PAR"
+    },
+    {
+        "rank": 38,
+        "conId": 356576040,
+        "symbol": "DOW",
+        "localSymbol": "DOW",
+        "tradingClass": "DOW"
+    },
+    {
+        "rank": 39,
+        "conId": 535283345,
+        "symbol": "GPGI",
+        "localSymbol": "GPGI",
+        "tradingClass": "GPGI"
+    },
+    {
+        "rank": 40,
+        "conId": 365207014,
+        "symbol": "UBER",
+        "localSymbol": "UBER",
+        "tradingClass": "UBER"
+    },
+    {
+        "rank": 41,
+        "conId": 29380756,
+        "symbol": "NDAQ",
+        "localSymbol": "NDAQ",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 42,
+        "conId": 876162846,
+        "symbol": "NHP",
+        "localSymbol": "NHP",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 43,
+        "conId": 101694297,
+        "symbol": "MTDR",
+        "localSymbol": "MTDR",
+        "tradingClass": "MTDR"
+    },
+    {
+        "rank": 44,
+        "conId": 75961365,
+        "symbol": "BNO",
+        "localSymbol": "BNO",
+        "tradingClass": "BNO"
+    },
+    {
+        "rank": 45,
+        "conId": 416180803,
+        "symbol": "UCO",
+        "localSymbol": "UCO",
+        "tradingClass": "UCO"
+    },
+    {
+        "rank": 46,
+        "conId": 418893644,
+        "symbol": "USO",
+        "localSymbol": "USO",
+        "tradingClass": "USO"
+    },
+    {
+        "rank": 47,
+        "conId": 232646339,
+        "symbol": "NTLA",
+        "localSymbol": "NTLA",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 48,
+        "conId": 83975037,
+        "symbol": "KMI",
+        "localSymbol": "KMI",
+        "tradingClass": "KMI"
+    },
+    {
+        "rank": 49,
+        "conId": 8093,
+        "symbol": "CNP",
+        "localSymbol": "CNP",
+        "tradingClass": "CNP"
+    }
+]
