@@ -12,6 +12,7 @@ from dataclasses import asdict # ib_async objects are often dataclasses so they 
 from decimal import Decimal
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
+#from brotools import load_active_strategy
 from brotools.strat_gap_rise import strategy
 
 
@@ -72,7 +73,6 @@ async def get_data_async():
 def getdata():
     asyncio.run(get_data_async())
 
-
 async def get_report_async():
     ib = IB()
     try:
@@ -89,14 +89,14 @@ async def get_report_async():
         #    belowPrice=20,
         #    aboveVolume=10000000)
         sub = ScannerSubscription()
-        sub.numberOfRows = 10
+        sub.numberOfRows = 50
         sub.instrument   = 'STK'
-        sub.locationCode = 'STK.NASDAQ'
+        sub.locationCode = 'STK.US.MAJOR'
         #sub.scanCode    = 'TOP_PERC_GAIN'        
         sub.scanCode     = 'HIGH_OPEN_GAP'
         sub.abovePrice   = 10
         sub.belowPrice   = 200
-        sub.aboveVolume  = 1000000       # 1 Millions transactions
+        sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
         sub.marketCapAbove = 300         # Small Market Capitalisation and above
         #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
 
@@ -128,6 +128,7 @@ async def get_report_async():
 
 def getreport():
     asyncio.run(get_report_async())
+   
 
 
 def signals():
@@ -147,7 +148,7 @@ def signals():
         else:
             continue
         # TODO: Add error handling
-        buy_signal = strategy(prospect, df, gap_threshold=10.0)
+        buy_signal = strategy(prospect, df, gap_threshold=4.0)
         
         if buy_signal is None:
             continue
@@ -235,7 +236,7 @@ async def place_orders_async():
     ib = IB()
     orders = []
     try:
-        # 1. Connect ONCE outside the loop
+        # 1. Connect ONCE outside the loop and load buy signals
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
         df_signals = pd.read_json('DATA/buy_signals.json')
@@ -284,13 +285,34 @@ async def place_orders_async():
 def place_orders():
     asyncio.run(place_orders_async())
 
-   
+async def monitor_trades_async():
+    ib = IB()   
+    try:
+        # 1. Connect ONCE outside the loop and load buy signals
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+        
+        #await ib.reqAllOpenOrders()  # Only call this if there is probability of IB() not obtaining orders on connect.
 
-def track_portfolio():
+        print("--- Active Orders ---")
+        idx = 1
+        for trade in ib.trades():
+            print("========================================================================================")
+            print(f"Trade #:{idx}")
+            print(trade) 
+            idx += 1
+             
+    except Exception as e:
+        print(f"❌ Error: {e}")              
+    finally:    
+        ib.disconnect()
+    
+
+def track_orders_and_positions():
     # get IBKR Open Positions
     # get IBKR trades for the day ?
     # Log trades with P&L in a csv file
-    pass
+    asyncio.run(monitor_trades_async())
+    
 
 def close_positions():
     ib = IB()

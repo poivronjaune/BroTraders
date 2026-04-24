@@ -1,4 +1,7 @@
+import json
 import pandas as pd
+from datetime import datetime, time
+
 
 def get_prev_close(df):
     try:    
@@ -11,18 +14,25 @@ def get_prev_close(df):
         return None, None
     
 
-def get_currday_open(df):
+def get_currday_open(df):    
+    now = datetime.now().time()
+    market_open_time = time(9, 30)
+    
     try:
         date_curr = pd.to_datetime(df['date'].iloc[-1]).date()
         df_filtered = pd.to_datetime(df['date']).dt.date == date_curr
         df1 = df[df_filtered]
+        
+        if now < market_open_time:
+            # If pre-market return latest candle retrieved
+            return df1['open'].iloc[-1], date_curr
+        
         df_curr = df1[pd.to_datetime(df1['date']).dt.hour >= 9]
-        # df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.hour < 10]
+        df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.hour < 10]
         # take rows greater than 9:30 
         df_curr = df_curr[pd.to_datetime(df_curr['date']).dt.minute >= 30]
 
-        return  df_curr['open'].iloc[-1], date_curr
-        #return df_curr['open'].iloc[0], date_curr
+        return df_curr['open'].iloc[0], date_curr
     except Exception as e:
         return None, None
 
@@ -34,17 +44,16 @@ def strategy(prospect,df, gap_threshold=10.0):
     
     # Sanity Checks
     if close_price is None or open_price is None:
+        print(f"{prospect} -> Skipped, no Analysis possible, not enough data [ Close:{close_price}, Open:{open_price} ].")
         return None
     
 
     gap = open_price - close_price
     gap_perc = gap / close_price * 100
-    # print(f"Gap: {gap:.2f}, Gap Percentage: {gap_perc:.2f}%")
     if gap_perc >= gap_threshold:
         is_treshhold_reached = True
     else:        
         is_treshhold_reached = False
-
 
 
     buy_signal = {
@@ -58,5 +67,9 @@ def strategy(prospect,df, gap_threshold=10.0):
         "open_curr": open_price,
         "threshold_reached": is_treshhold_reached
     }
+    print(f'{buy_signal["symbol"]} -> Previous Close: {buy_signal["close_prev"]}, Current Open: {buy_signal["open_curr"]}, GAP: {buy_signal["gap_perc"]:.2f}% --- {len(df)} rows Analysed')    
 
     return buy_signal
+
+
+    
