@@ -10,9 +10,11 @@ from ib_async import *
 from pprint import pprint
 from dataclasses import asdict # ib_async objects are often dataclasses so they can be easily converted to dicts for JSON serialization
 from decimal import Decimal
+from pathlib import Path
 
+from brotools import get_strategy_list
+from brotools import Strategy_Open_Gap_Up
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
-#from brotools import load_active_strategy
 from brotools.strat_gap_rise import strategy
 
 
@@ -148,7 +150,7 @@ def signals():
         else:
             continue
         # TODO: Add error handling
-        buy_signal = strategy(prospect, df, gap_threshold=4.0)
+        buy_signal = strategy(prospect, df, gap_threshold=10.0)
         
         if buy_signal is None:
             continue
@@ -325,11 +327,39 @@ def close_positions():
         print(f"Cancelled order: {o.action} {o.totalQuantity} {o.orderType}")    
     
     ib.disconnect()
+
+def print_app_name():
+    print("┌───────────────────────────────────────────────────────┐")
+    print("│    BROTOOLS: AUTOMATED TRADING                        │")
+    print("└───────────────────────────────────────────────────────┘") 
+       
+def run(stratgey_name):
+    print_app_name()
+    print(f"Selected Strategy: {stratgey_name}\n")
     
+
+def error_msg(err_msg, extra:list=[]):
+    print_app_name()
+    print(f"\n[!] Error: {err_msg}")
+    print("Usage: run <strategy_name>")
+    print(f"\nAvailable strategies:")
+    print(*extra, sep='\n') # Print a list of items one per row
+    print(" ")
+          
 def main():
-    print("Hello, BroTools!")
-    print("This is the main entry point of the application.")
-    # You can add more functionality here as needed.
+    strategy_list = get_strategy_list()
+        
+    if len(sys.argv) < 2:
+        error_msg('No strategy selected.', extra=strategy_list)
+        return
+
+    strategy_name = sys.argv[1]
+    if strategy_name not in strategy_list:
+        error_msg('Bad strategy name', extra=strategy_list)
+        return        
+    
+    run(strategy_name)
+
     
 if __name__ == "__main__":
     main()

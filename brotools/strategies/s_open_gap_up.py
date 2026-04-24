@@ -3,20 +3,21 @@ import json
 import pandas as pd 
 from datetime import datetime
 
-class Strategy:
+class Strategy_Open_Gap_Up:
     def __init__(self):
-        self.name = "Top Percent Gainers"   
+        self.name = "Open Gap Strategy"   
         self.gap_treshold = 10.0  
     
     def set_active_strategy(self, filename="DATA/strategy.json"):
+        '''Dynamically create a strategy.json file to activate this strategy so other commands can work with it'''
         strategy = {
             "name": self.name,
             "chosen_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             "scanner" : {
                 "sub.numberOfRows": 50,
-                "sub.scanCode": 'TOP_PERC_GAIN',
+                "sub.scanCode": 'HIGH_OPEN_GAP',
                 "sub.locationCode": 'STK.US.MAJOR',
-                "sub.abovePrice": 10,
+                "sub.abovePrice": 50,
                 "sub.belowPrice": 200,
                 "sub.aboveVolume": 100000,
                 "sub.marketCapAbove": 300
@@ -31,6 +32,7 @@ class Strategy:
         
 
     def load_active_strategy(self, filename="DATA/strategy.json"):
+        '''Normalised stragy.json loading to get parameters for commands. This should be called before any command.'''
         if not os.path.exists(filename):
             # Raising an error here allows the calling function to know exactly what failed
             raise FileNotFoundError(f"Strategy configuration file NOT found at: {os.path.abspath(filename)}")
@@ -42,9 +44,3 @@ class Strategy:
         
         return strategy_json
 
-
-        
-if __name__ == "__main__":
-    s = Strategy()
-    # s.set_active_strategy()    
-    s.load_active_strategy()

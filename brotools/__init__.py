@@ -1,24 +1,17 @@
+from pathlib import Path
+from brotools.strategies.s_open_gap_up import Strategy_Open_Gap_Up
 
-def choose_strategy():
-    print("Choose a strategy to activate:")
-    print("1. High Open Gap Strategy - Works only at market open")
-    print("2. Top Percent Gains - Works all day")
+def get_strategy_list():
+    # Define the directory
+    strat_dir = Path("brotools/strategies")
     
-    choice = input("Enter the number of the strategy you want to run: ")
-    
-    if choice == '1':
-        from brotools.strategy_high_open_gap import Strategy
-    elif choice == '2':
-        from brotools.strategy_top_perc_gain import Strategy
-    else:
-        print("Invalid choice. Please select a valid strategy number.")
-        return
-    
-    strategy_filename = "DATA/strategy.json"
-    strategy = Strategy()
-    Strategy_name = strategy.name
-    strategy.set_active_strategy(filename=strategy_filename)
+    # 1. glob("s_*") finds everything starting with s_
+    # 2. .stem gets the filename without the extension (e.g., .py)
+    # 3. is_file() ensures we don't accidentally pick up folders
+    strategies = [f.stem for f in strat_dir.glob("s_*") if f.is_file()]
 
-    print(f"\nStrategy '{Strategy_name}' has been set as the active strategy. See file '{strategy_filename}' for details.")
+    return strategies
 
-    
+__all__ = [
+    Strategy_Open_Gap_Up
+]    
