@@ -4,6 +4,7 @@ import glob
 import asyncio
 import json
 import pandas as pd
+import importlib
 
 from datetime import datetime
 from ib_async import *
@@ -12,8 +13,7 @@ from dataclasses import asdict # ib_async objects are often dataclasses so they 
 from decimal import Decimal
 from pathlib import Path
 
-from brotools import get_strategy_list
-from brotools import Strategy_Open_Gap_Up
+from brotools import get_strategy_list, to_pascal_case
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.strat_gap_rise import strategy
 
@@ -328,16 +328,67 @@ def close_positions():
     
     ib.disconnect()
 
+##########################################################################################
+#
+# NEW Refactored strategy run architecture
+#
+##########################################################################################
+
+async def scan_report_async(ib, strategy_instance):
+    try:
+        # 1. Use connectAsync
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+                
+        #sub = ScannerSubscription(
+        #    numberOfRows=30,
+        #    instrument='STK',
+        #    locationCode='STK.NASDAQ',
+        #    #scanCode='TOP_PERC_GAIN',
+        #    scanCode='HIGH_OPEN_GAP',
+        #    abovePrice=2,
+        #    belowPrice=20,
+        #    aboveVolume=10000000)
+        sub = ScannerSubscription()
+        sub.numberOfRows = 50
+        sub.instrument   = 'STK'
+        sub.locationCode = 'STK.US.MAJOR'
+        #sub.scanCode    = 'TOP_PERC_GAIN'        
+        sub.scanCode     = 'HIGH_OPEN_GAP'
+        sub.abovePrice   = 10
+        sub.belowPrice   = 200
+        sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
+        sub.marketCapAbove = 300         # Small Market Capitalisation and above
+        #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
+
+        # 2. Use reqScannerDataAsync to wait for the results
+        print("Requesting scanner data...")
+        scanData = await ib.reqScannerDataAsync(sub)    
+
+        results = [
+            {
+                "rank": d.rank,
+                "conId": d.contractDetails.contract.conId,
+                "symbol": d.contractDetails.contract.symbol,
+                "localSymbol": d.contractDetails.contract.localSymbol,
+                "tradingClass": d.contractDetails.contract.tradingClass
+            }
+            for d in scanData
+        ]
+        
+        # 3. Save to file
+        with open('DATA/results.json', 'w') as f:
+            json.dump(results, f, indent=4)
+            
+        print(f"Success: {len(results)} items saved to DATA/results.json")
+    except Exception as e:
+        print(f"Error during scan: {e}")
+
+
 def print_app_name():
     print("┌───────────────────────────────────────────────────────┐")
     print("│    BROTOOLS: AUTOMATED TRADING                        │")
     print("└───────────────────────────────────────────────────────┘") 
        
-def run(stratgey_name):
-    print_app_name()
-    print(f"Selected Strategy: {stratgey_name}\n")
-    
-
 def error_msg(err_msg, extra:list=[]):
     print_app_name()
     print(f"\n[!] Error: {err_msg}")
@@ -347,6 +398,7 @@ def error_msg(err_msg, extra:list=[]):
     print(" ")
           
 def main():
+    # Setup, load strategy and run the trading bot
     strategy_list = get_strategy_list()
         
     if len(sys.argv) < 2:
@@ -356,11 +408,31 @@ def main():
     strategy_name = sys.argv[1]
     if strategy_name not in strategy_list:
         error_msg('Bad strategy name', extra=strategy_list)
-        return        
+        return  
     
-    run(strategy_name)
+    print_app_name()
+    print(f"Selected Strategy: {strategy_name}\n")
+    
+    module_path = f"brotools.strategies.{strategy_name}"
+    
+    try:
+        ib = IB()
+        module = importlib.import_module(module_path)
+        class_name = to_pascal_case(strategy_name)
+        strategy_class = getattr(module, class_name)
+        strategy_instance = strategy_class()
+        print(strategy_instance.name)
+        asyncio.run(scan_report_async(ib, strategy_instance))
+        #asyncio.run(get_report_async())        
+    except ImportError as e:
+        print(f"[!] Error: Could not find module at {module_path} \n{e}")
+    except AttributeError as e:
+        print(f"[!] Error: Module '{strategy_name}' does not contain class '{class_name}'\n{e}")        
+    finally:
+        ib.disconnect()
+        
+    return
 
-    
 if __name__ == "__main__":
     main()
     
