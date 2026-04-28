@@ -96,8 +96,8 @@ async def get_report_async():
         sub.locationCode = 'STK.US.MAJOR'
         #sub.scanCode    = 'TOP_PERC_GAIN'        
         sub.scanCode     = 'HIGH_OPEN_GAP'
-        sub.abovePrice   = 10
-        sub.belowPrice   = 200
+        sub.abovePrice   = 2
+        sub.belowPrice   = 500
         sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
         sub.marketCapAbove = 300         # Small Market Capitalisation and above
         #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        

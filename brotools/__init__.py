@@ -1,12 +1,31 @@
 import json
 import csv
 import pandas as pd
+import numpy as np
 import xml.etree.ElementTree as ET
 
 from pathlib import Path
 from ib_async import *
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
+
+
+def to_pascal_case(snake_str):
+    """Converts strategy_open_gap_up to StrategyOpenGapUp"""
+    return "".join(word.capitalize() for word in snake_str.split("_")) 
+
+def to_serializable(obj):
+    if isinstance(obj, (float, np.float64)):
+        return round(float(obj), 2)
+    if isinstance(obj, (bool, np.bool_)):
+        return bool(obj)
+    if isinstance(obj, list):
+        return [to_serializable(i) for i in obj]
+    if isinstance(obj, dict):
+        return {k: to_serializable(v) for k, v in obj.items()}
+    
+    return obj
+
 
 
 def get_strategy_list():
@@ -19,10 +38,6 @@ def get_strategy_list():
     strategies = [f.stem for f in strat_dir.glob("strategy_*") if f.is_file()]
 
     return strategies
-
-def to_pascal_case(snake_str):
-    """Converts strategy_open_gap_up to StrategyOpenGapUp"""
-    return "".join(word.capitalize() for word in snake_str.split("_")) 
 
 
 def load_tickers_list(filename='DATA/prospects.json') -> pd.DataFrame:
