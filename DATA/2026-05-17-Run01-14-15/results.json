@@ -1,0 +1,352 @@
+[
+    {
+        "rank": 0,
+        "conId": 334909224,
+        "symbol": "PPLT",
+        "localSymbol": "PPLT",
+        "tradingClass": "PPLT"
+    },
+    {
+        "rank": 1,
+        "conId": 880582728,
+        "symbol": "BOT",
+        "localSymbol": "BOT",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 2,
+        "conId": 447913962,
+        "symbol": "HYLN",
+        "localSymbol": "HYLN",
+        "tradingClass": "HYLN"
+    },
+    {
+        "rank": 3,
+        "conId": 188625650,
+        "symbol": "SEDG",
+        "localSymbol": "SEDG",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 4,
+        "conId": 526906304,
+        "symbol": "SG",
+        "localSymbol": "SG",
+        "tradingClass": "SG"
+    },
+    {
+        "rank": 5,
+        "conId": 876467123,
+        "symbol": "AXTX",
+        "localSymbol": "AXTX",
+        "tradingClass": "AXTX"
+    },
+    {
+        "rank": 6,
+        "conId": 160756766,
+        "symbol": "GLOB",
+        "localSymbol": "GLOB",
+        "tradingClass": "GLOB"
+    },
+    {
+        "rank": 7,
+        "conId": 10294,
+        "symbol": "NL",
+        "localSymbol": "NL",
+        "tradingClass": "NL"
+    },
+    {
+        "rank": 8,
+        "conId": 774786526,
+        "symbol": "SATL",
+        "localSymbol": "SATL",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 9,
+        "conId": 881547637,
+        "symbol": "BRUN",
+        "localSymbol": "BRUN",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 10,
+        "conId": 802794976,
+        "symbol": "FIG",
+        "localSymbol": "FIG",
+        "tradingClass": "FIG"
+    },
+    {
+        "rank": 11,
+        "conId": 880200689,
+        "symbol": "ENHA",
+        "localSymbol": "ENHA",
+        "tradingClass": "ENHA"
+    },
+    {
+        "rank": 12,
+        "conId": 854072548,
+        "symbol": "SOXS",
+        "localSymbol": "SOXS",
+        "tradingClass": "SOXS"
+    },
+    {
+        "rank": 13,
+        "conId": 467911567,
+        "symbol": "SHLS",
+        "localSymbol": "SHLS",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 14,
+        "conId": 836365978,
+        "symbol": "MICC",
+        "localSymbol": "MICC",
+        "tradingClass": "MICC"
+    },
+    {
+        "rank": 15,
+        "conId": 346369068,
+        "symbol": "KOS",
+        "localSymbol": "KOS",
+        "tradingClass": "KOS"
+    },
+    {
+        "rank": 16,
+        "conId": 105368327,
+        "symbol": "ENPH",
+        "localSymbol": "ENPH",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 17,
+        "conId": 683779067,
+        "symbol": "SOC",
+        "localSymbol": "SOC",
+        "tradingClass": "SOC"
+    },
+    {
+        "rank": 18,
+        "conId": 649389091,
+        "symbol": "SPIR",
+        "localSymbol": "SPIR",
+        "tradingClass": "SPIR"
+    },
+    {
+        "rank": 19,
+        "conId": 673368857,
+        "symbol": "SIDU",
+        "localSymbol": "SIDU",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 20,
+        "conId": 617184867,
+        "symbol": "CD",
+        "localSymbol": "CD",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 21,
+        "conId": 756373540,
+        "symbol": "VG",
+        "localSymbol": "VG",
+        "tradingClass": "VG"
+    },
+    {
+        "rank": 22,
+        "conId": 196892722,
+        "symbol": "WING",
+        "localSymbol": "WING",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 23,
+        "conId": 268960158,
+        "symbol": "DXC",
+        "localSymbol": "DXC",
+        "tradingClass": "DXC"
+    },
+    {
+        "rank": 24,
+        "conId": 589316251,
+        "symbol": "TEAM",
+        "localSymbol": "TEAM",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 25,
+        "conId": 169544810,
+        "symbol": "HUBS",
+        "localSymbol": "HUBS",
+        "tradingClass": "HUBS"
+    },
+    {
+        "rank": 26,
+        "conId": 56935150,
+        "symbol": "BLDP",
+        "localSymbol": "BLDP",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 27,
+        "conId": 4726868,
+        "symbol": "AXTI",
+        "localSymbol": "AXTI",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 28,
+        "conId": 273538,
+        "symbol": "PZZA",
+        "localSymbol": "PZZA",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 29,
+        "conId": 796360468,
+        "symbol": "AEBI",
+        "localSymbol": "AEBI",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 30,
+        "conId": 32923763,
+        "symbol": "WTI",
+        "localSymbol": "WTI",
+        "tradingClass": "WTI"
+    },
+    {
+        "rank": 31,
+        "conId": 592052137,
+        "symbol": "RXO",
+        "localSymbol": "RXO",
+        "tradingClass": "RXO"
+    },
+    {
+        "rank": 32,
+        "conId": 447584483,
+        "symbol": "ASAN",
+        "localSymbol": "ASAN",
+        "tradingClass": "ASAN"
+    },
+    {
+        "rank": 33,
+        "conId": 4813508,
+        "symbol": "INOD",
+        "localSymbol": "INOD",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 34,
+        "conId": 33837089,
+        "symbol": "DXCM",
+        "localSymbol": "DXCM",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 35,
+        "conId": 515658485,
+        "symbol": "FRSH",
+        "localSymbol": "FRSH",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 36,
+        "conId": 1847145,
+        "symbol": "FDS",
+        "localSymbol": "FDS",
+        "tradingClass": "FDS"
+    },
+    {
+        "rank": 37,
+        "conId": 316544447,
+        "symbol": "TALO",
+        "localSymbol": "TALO",
+        "tradingClass": "TALO"
+    },
+    {
+        "rank": 38,
+        "conId": 502252229,
+        "symbol": "RGC",
+        "localSymbol": "RGC",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 39,
+        "conId": 483311199,
+        "symbol": "PATH",
+        "localSymbol": "PATH",
+        "tradingClass": "PATH"
+    },
+    {
+        "rank": 40,
+        "conId": 10931,
+        "symbol": "PBT",
+        "localSymbol": "PBT",
+        "tradingClass": "PBT"
+    },
+    {
+        "rank": 41,
+        "conId": 35442355,
+        "symbol": "STN",
+        "localSymbol": "STN",
+        "tradingClass": "STN"
+    },
+    {
+        "rank": 42,
+        "conId": 712108704,
+        "symbol": "FUN",
+        "localSymbol": "FUN",
+        "tradingClass": "FUN"
+    },
+    {
+        "rank": 43,
+        "conId": 375796353,
+        "symbol": "XRX",
+        "localSymbol": "XRX",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 44,
+        "conId": 583996502,
+        "symbol": "MSFU",
+        "localSymbol": "MSFU",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 45,
+        "conId": 545665955,
+        "symbol": "BRBR",
+        "localSymbol": "BRBR",
+        "tradingClass": "BRBR"
+    },
+    {
+        "rank": 46,
+        "conId": 326314577,
+        "symbol": "REPL",
+        "localSymbol": "REPL",
+        "tradingClass": "NMS"
+    },
+    {
+        "rank": 47,
+        "conId": 41102320,
+        "symbol": "ESOA",
+        "localSymbol": "ESOA",
+        "tradingClass": "SCM"
+    },
+    {
+        "rank": 48,
+        "conId": 801327622,
+        "symbol": "ARX",
+        "localSymbol": "ARX",
+        "tradingClass": "ARX"
+    },
+    {
+        "rank": 49,
+        "conId": 532274461,
+        "symbol": "IOT",
+        "localSymbol": "IOT",
+        "tradingClass": "IOT"
+    }
+]

@@ -94,8 +94,8 @@ async def get_report_async():
         sub.numberOfRows = 50
         sub.instrument   = 'STK'
         sub.locationCode = 'STK.US.MAJOR'
-        #sub.scanCode    = 'TOP_PERC_GAIN'        
-        sub.scanCode     = 'HIGH_OPEN_GAP'
+        sub.scanCode    = 'TOP_PERC_GAIN'        
+        #sub.scanCode     = 'HIGH_OPEN_GAP'
         sub.abovePrice   = 2
         sub.belowPrice   = 500
         sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
