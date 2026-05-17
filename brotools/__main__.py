@@ -192,6 +192,7 @@ def save_orders_to_json(orders_list, filename='DATA/submitted_orders.json'):
         t = asdict(order_group["take_profit"])
 
         entry = {
+            "symbol": order_group["symbol"],
             # parent
             "p_orderId": p["orderId"],
             "p_action": p["action"],
@@ -265,7 +266,7 @@ async def place_orders_async():
             ib.placeOrder(contract, stop_loss)
             ib.placeOrder(contract, take_profit)
             
-            order = {"parent": parent, "stop_loss": stop_loss, "take_profit": take_profit}
+            order = {"symbol":signal['symbol'], "parent": parent, "stop_loss": stop_loss, "take_profit": take_profit}
             orders.append(order)
                     
             # Small async sleep to let the event loop process network traffic
@@ -274,6 +275,7 @@ async def place_orders_async():
             print(f"✅ Bracket submitted for {signal['symbol']} (Parent ID: {parent.orderId})")
 
     except Exception as e:
+        #TODO: Do we want to track ordaers that failed in our file?
         print(f"❌ Error: {e}")
     finally:
         # 5. Disconnect AFTER all loop iterations are done
