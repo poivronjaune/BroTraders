@@ -11,7 +11,7 @@ authors = [
     { name = "Marc Boivin", email = "grosplombs@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 dependencies = [
     # "/TWS API/source/pythonclient", # This installs protobuf, which is a dependency of ibapi
@@ -23,7 +23,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12",
 ]
 
 [tool.hatch.build.targets.wheel]
