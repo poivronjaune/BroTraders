@@ -19,7 +19,7 @@ py -m pip install -U pip
 py install -e .
 
 ```
-or use the helper powerahell script that runs all install commands:
+or use the helper PowerShell script that runs all install commands:
 ```
 install.ps1
 ```
