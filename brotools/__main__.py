@@ -12,7 +12,6 @@ from dataclasses import asdict # ib_async objects are often dataclasses so they 
 from decimal import Decimal
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
-#from brotools import load_active_strategy
 from brotools.strat_gap_rise import strategy
 
 def load_tickers():
