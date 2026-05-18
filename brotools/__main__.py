@@ -15,7 +15,6 @@ from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 #from brotools import load_active_strategy
 from brotools.strat_gap_rise import strategy
 
-
 def load_tickers():
     with open('DATA/results.json', 'r') as f:
         symbols = json.load(f)
@@ -92,8 +91,8 @@ async def get_report_async():
         sub.numberOfRows = 50
         sub.instrument   = 'STK'
         sub.locationCode = 'STK.US.MAJOR'
-        #sub.scanCode    = 'TOP_PERC_GAIN'        
-        sub.scanCode     = 'HIGH_OPEN_GAP'
+        sub.scanCode    = 'TOP_PERC_GAIN'        
+        #sub.scanCode     = 'HIGH_OPEN_GAP'
         sub.abovePrice   = 10
         sub.belowPrice   = 200
         sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
@@ -129,8 +128,6 @@ async def get_report_async():
 def getreport():
     asyncio.run(get_report_async())
    
-
-
 def signals():
     # Loop through json in rank order 
     # Open minute data csv file in pandas
@@ -148,7 +145,7 @@ def signals():
         else:
             continue
         # TODO: Add error handling
-        buy_signal = strategy(prospect, df, gap_threshold=4.0)
+        buy_signal = strategy(prospect, df, gap_threshold=5.0)
         
         if buy_signal is None:
             continue
@@ -157,7 +154,6 @@ def signals():
 
     with open('DATA/buy_signals.json', 'w') as f:
         json.dump(buy_signals, f, indent=4)
-
 
 def create_bracket_order(qte, estimated_buy_price):
     # Build a bracket order to be called with a contract later in the code
@@ -175,7 +171,6 @@ def create_bracket_order(qte, estimated_buy_price):
     takeProfit = LimitOrder('SELL', qte, target_price, tif='GTC', transmit = True)
 
     return parent, stopLoss, takeProfit
-
 
 def save_orders_to_json(orders_list, filename='DATA/submitted_orders.json'):
     """Converts ib_async Order objects to dictionaries and saves to JSON."""
@@ -232,7 +227,6 @@ def save_orders_to_json(orders_list, filename='DATA/submitted_orders.json'):
         json.dump(serializable_orders, f, indent=4, default=decimal_default)
     print(f"📂 Saved {len(orders_list)} order brackets to {filename}")
     
-   
 async def place_orders_async():
     ib = IB()
     orders = []
@@ -283,7 +277,6 @@ async def place_orders_async():
         if len(orders) > 0:
             save_orders_to_json(orders)
     
-    
 def place_orders():
     asyncio.run(place_orders_async())
 
@@ -308,14 +301,12 @@ async def monitor_trades_async():
     finally:    
         ib.disconnect()
     
-
 def track_orders_and_positions():
     # get IBKR Open Positions
     # get IBKR trades for the day ?
     # Log trades with P&L in a csv file
     asyncio.run(monitor_trades_async())
     
-
 def close_positions():
     ib = IB()
     ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
