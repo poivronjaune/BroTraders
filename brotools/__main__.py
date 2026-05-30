@@ -11,121 +11,28 @@ from pprint import pprint
 from dataclasses import asdict # ib_async objects are often dataclasses so they can be easily converted to dicts for JSON serialization
 from decimal import Decimal
 
+from brotools.services import load_tickers_from_results, get_data_async
+from brotools.async_services import get_report_async, save_data_async
+
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.strat_gap_rise import strategy
-
-def load_tickers():
-    with open('DATA/results.json', 'r') as f:
-        symbols = json.load(f)
-        
-    tickers = [t['symbol'] for t in symbols]
-    
-    return tickers
-
-async def get_data_async():
-    ib = IB()
-    try:
-        # 1. Connect ONCE using the async method
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-        tickers = load_tickers()
-        
-        for ticker in tickers:
-            # Check if ticker is a conId (int) or symbol (str) based on our previous talk
-            if isinstance(ticker, int):
-                contract = Stock(conId=ticker)
-            else:
-                contract = Stock(ticker, "SMART", "USD")
-
-            # 2. Qualify the contract to ensure we have the right details
-            await ib.qualifyContractsAsync(contract)
-            print(f"Fetching data for {contract.symbol}...")
-
-            # 3. Use the Async version of historical data request
-            bars = await ib.reqHistoricalDataAsync(
-                contract,
-                endDateTime="",
-                durationStr="2 D",
-                barSizeSetting="1 min",
-                whatToShow="TRADES",
-                useRTH=False  # Crucial for Gaps: gets Pre-Market data
-            )
-
-            if bars:
-                df = util.df(bars)
-                filename = f"DATA/{contract.symbol}_1min_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-                df.to_csv(filename, index=False)
-                print(f"Saved {len(bars)} rows to {filename}")
-            else:
-                print(f"No data returned for {contract.symbol}")
-
-            # 4. Small sleep to avoid hitting IBKR pacing violations
-            await asyncio.sleep(0.1)
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        # 5. Always disconnect in the finally block
-        ib.disconnect()
-
-def getdata():
-    asyncio.run(get_data_async())
-
-async def get_report_async():
-    ib = IB()
-    try:
-        # 1. Use connectAsync
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-        #sub = ScannerSubscription(
-        #    numberOfRows=30,
-        #    instrument='STK',
-        #    locationCode='STK.NASDAQ',
-        #    #scanCode='TOP_PERC_GAIN',
-        #    scanCode='HIGH_OPEN_GAP',
-        #    abovePrice=2,
-        #    belowPrice=20,
-        #    aboveVolume=10000000)
-        sub = ScannerSubscription()
-        sub.numberOfRows = 50
-        sub.instrument   = 'STK'
-        sub.locationCode = 'STK.US.MAJOR'
-        sub.scanCode    = 'TOP_PERC_GAIN'        
-        #sub.scanCode     = 'HIGH_OPEN_GAP'
-        sub.abovePrice   = 10
-        sub.belowPrice   = 200
-        sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
-        sub.marketCapAbove = 300         # Small Market Capitalisation and above
-        #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
-
-        # 2. Use reqScannerDataAsync to wait for the results
-        print("Requesting scanner data...")
-        scanData = await ib.reqScannerDataAsync(sub)    
-
-        results = [
-            {
-                "rank": d.rank,
-                "conId": d.contractDetails.contract.conId,
-                "symbol": d.contractDetails.contract.symbol,
-                "localSymbol": d.contractDetails.contract.localSymbol,
-                "tradingClass": d.contractDetails.contract.tradingClass
-            }
-            for d in scanData
-        ]
-        
-        # 3. Save to file
-        with open('DATA/results.json', 'w') as f:
-            json.dump(results, f, indent=4)
-            
-        print(f"Success: {len(results)} items saved to DATA/results.json")
-    except Exception as e:
-        print(f"Error during scan: {e}")
-    finally:
-        # 4. Always disconnect
-        ib.disconnect()    
+from brotools.strategies.gap_rise import Strategy
 
 def getreport():
-    asyncio.run(get_report_async())
+    with Strategy() as strategy:
+        scan_result = asyncio.run(get_report_async(strategy))
+        if scan_result is not None:
+            #save_report_to_json(result)
+            scan_result.to_csv("DATA/1_scan_results.csv", index=False)
+            
+
+def getdata() -> None:
+    # Retreive price data for a list of tickers
+    #TODO Add timeframe and back_days as parameters from Strategy class
+    #tickers = load_tickers_from_results()
+    tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
+    asyncio.run(save_data_async(tickers))
+
    
 def signals():
     # Loop through json in rank order 
@@ -135,7 +42,7 @@ def signals():
     # if all positive add to buy list
     
     # Load resulst.json
-    prospects = load_tickers()
+    prospects = load_tickers_from_results()
     buy_signals = []
     for prospect in prospects:
         csv_files = glob.glob(f"DATA/{prospect}_1min_*.csv")

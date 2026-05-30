@@ -21,6 +21,7 @@ py install -e .
 ```
 or use the helper PowerShell script that runs all install commands:
 ```
+Set-ExecutionPolicy RemoteSigned
 install.ps1
 ```
 

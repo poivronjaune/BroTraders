@@ -1,6 +1,7 @@
 # Project specific ignores
 Archive/
 BKUP/
+DATA/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

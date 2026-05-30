@@ -33,4 +33,16 @@ if ($LASTEXITCODE -ne 0) {
     Exit $LASTEXITCODE
 }
 
+$DataFolder = "DATA"
+if (-not (Test-Path $DataFolder)) {
+    Write-Host "DATA folder not found. Creating $DataFolder..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Path $DataFolder | Out-Null
+    if (-not (Test-Path $DataFolder)) {
+        Write-Error "Failed to create the DATA folder. Exiting."
+        Exit 1
+    }
+} else {
+    Write-Host "DATA folder already exists." -ForegroundColor Cyan
+}
+
 Write-Host "Environment setup completed successfully!" -ForegroundColor Green
