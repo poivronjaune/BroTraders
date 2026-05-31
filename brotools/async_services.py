@@ -88,3 +88,6 @@ async def save_data_async(tickers, timeframe= None, back_days=None):
     finally:
         # 5. Always disconnect in the finally block
         ib.disconnect()             
+
+async def place_orders_async():
+    print("Placing orders...Function needs to be implemented")

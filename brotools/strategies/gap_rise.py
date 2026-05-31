@@ -1,10 +1,23 @@
 import pandas as pd
 from ib_async import ScannerSubscription  
 
+from brotools.trading_indicators import prev_day_closing_bar, current_day_opening_bar
+from brotools.trading_rules import check_trading_window, check_gap_size, check_candles_up
+
 class Strategy:
     def __init__(self):
         self.name = "Gap Rise Strategy"
         self.description = "Identifies stocks that have a significant price gap up at the market open, followed by green candles."
+        self.gap_threshhold = 10
+        self.active_start_time = "09:30"
+        self.active_end_time = "09:45"
+
+        self.rules = [
+            (check_trading_window, {"start_time": "09:30", "end_time": "09:45"}),
+            (check_gap_size, {"gap_threshold": 10.0}),
+            (check_candles_up, {"consecutive": 3})  # Uses 09:30 and 16:00 by default for RTH
+        ]
+
 
     def __enter__(self):
         # This runs when entering the 'with' block
@@ -32,12 +45,13 @@ class Strategy:
         return sub
     
     def add_indicators(self, df_data):
-        # Placeholder for future indicator calculations
-        prev_close = self.prev_day_close_bar(df_data)
+        # TODO: Evaluate if indicator functions should modify the dataframe or keep it in the function
+
+        prev_close = prev_day_closing_bar(df_data)
         df_data["gap_close_time"] = prev_close.name
         df_data["gap_close_price"] = prev_close["close"] 
 
-        curr_open = self.current_day_open_bar(df_data)
+        curr_open = current_day_opening_bar(df_data)
         df_data["gap_open_time"] = curr_open.name
         df_data["gap_open_price"] = curr_open["open"]
 
@@ -46,33 +60,56 @@ class Strategy:
 
         return df_data
     
-    def add_signal(self, df_data):
-        # Placeholder for future signal generation logic
-        df_data['new_col'] = 100
-        return df_data
-    
-    #
-    # UTILITY FUNCTIONS FOR STRATEGY LOGIC
-    #
-    def prev_day_close_bar(self, df_prices: pd.DataFrame):
-        last_day = df_prices.index.date.max()
-        prev_days_df = df_prices[df_prices.index.date < last_day]
+    def is_buy_signal(self, df_data) -> bool:
+        is_buy_signal = False
         
-        if prev_days_df.empty:
-            raise ValueError("No historical data available prior to the last trading day.")
-        
-        regular_hours_df = prev_days_df.between_time("09:30", "16:00")
-        if regular_hours_df.empty:
-            raise ValueError("No regular session data found (09:30 to 16:00) on previous days.")        
-        
-        return regular_hours_df.iloc[-1]
-    
-    def current_day_open_bar(self, df_prices: pd.DataFrame):
-        last_day = df_prices.index.date.max()
-        current_day_df = df_prices[df_prices.index.date == last_day]
-        regular_hours_df = current_day_df.between_time("09:30", "16:00")
+        # Automatically pull the symbol if it exists in the data
+        symbol = df_data["symbol"].iloc[0] if "symbol" in df_data.columns else "UNKNOWN"
 
-        if regular_hours_df.empty:
-            raise ValueError(f"No regular session data found (09:30 to 16:00) for the current day ({last_day}).")        
+        # Assume we are trading in the day of our last cande datetime
+        # Open Gap > 10%
+        # First three bars must be green
+
+        # Setup conditions to fail by default
+        conditions_trace = {
+            "symbol": symbol,
+            "buy_signal": False
+        }
         
-        return regular_hours_df.iloc[0]
+        all_rules_passed = True
+
+        for rule_func, kwargs in self.rules:
+            # Execute the external function and unpack its specific arguments (**kwargs)
+            rule_name, passed = rule_func(df_data, **kwargs)
+            
+            conditions_trace[rule_name] = passed
+            
+            if not passed:
+                all_rules_passed = False # Fail signal on first failed rule
+                
+        conditions_trace["buy_signal"] = all_rules_passed
+
+        # 2. CAPTURE THE LAST ROW IN THE DATAFRAME to pass in the buy_signals
+        last_candle = df_data.iloc[-1]
+        last_time = df_data.index.max()
+
+        # Format timestamp cleanly as a string
+        if hasattr(last_time, 'strftime'):
+            last_time_str = last_time.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            last_time_str = str(last_time)
+
+        # Inject the final candle metrics into the tracer payload
+        conditions_trace["signal_time"] = last_time_str
+        conditions_trace["signal_open"] = float(last_candle["open"])
+        conditions_trace["signal_high"] = float(last_candle["high"])
+        conditions_trace["signal_low"] = float(last_candle["low"])
+        conditions_trace["signal_close"] = float(last_candle["close"])
+        conditions_trace["signal_volume"] = int(last_candle["volume"])
+
+
+
+
+
+        return conditions_trace
+       
