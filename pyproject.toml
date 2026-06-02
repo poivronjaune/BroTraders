@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "BroTraders"
-version = "0.1.0"
+version = "1.0.0"
 description = "Simple tools for algorithmic trading using IBKR TWS API"
 authors = [
-    { name = "Robert Boivin", email = "your_email@example.com" },
+    { name = "Robert Boivin", email = "poivronjaune@gmail.com" },
     { name = "Marc Boivin", email = "grosplombs@gmail.com"}
 ]
 readme = "README.md"
