@@ -192,6 +192,7 @@ async def place_orders_async():
             for result in placed_orders:
                 rows.append({
                     "symbol":           result['symbol'],
+                    "submitted_time":   datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     "parent_order_id":  result['parent_trade'].order.orderId,
                     "parent_status":    result['parent_trade'].orderStatus.status,
                     "sl_order_id":      result['sl_trade'].order.orderId,
