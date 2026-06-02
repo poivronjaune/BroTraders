@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 from ib_async import IB, ExecutionFilter
 
-from config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
+from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 
 # ---------------------------------------------------------------------------
 # File paths
@@ -69,10 +69,15 @@ def load_placed_orders(filepath: Path) -> pd.DataFrame:
         print(f"⚠️  No submitted_at column found — defaulting to {fallback} "
               f"for all rows. Consider adding submitted_at to your CSV.")
 
-    # Add missing timestamp columns
+    # Add missing timestamp columns — explicitly typed as object so string
+    # timestamps can be written later without pandas dtype conflicts.
+    # Columns loaded from CSV with all-NaN values are inferred as float64
+    # by pandas, which rejects string assignment at df.at[] time.
     for col in TIMESTAMP_COLUMNS:
         if col not in df.columns:
-            df[col] = None
+            df[col] = pd.Series(dtype="object")
+        else:
+            df[col] = df[col].astype("object")
 
     return df
 
@@ -320,6 +325,104 @@ def save_trade_log(new_trades: pd.DataFrame, filepath: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Cancellation tracking — separate workflow, runs after track_orders_async
+# ---------------------------------------------------------------------------
+
+def apply_cancellations_to_df(
+    df: pd.DataFrame,
+    open_order_ids: set,
+) -> tuple[pd.DataFrame, int]:
+    """
+    For each active row whose parent order ID is NOT in open_order_ids,
+    mark the parent and both children as Cancelled.
+
+    The absence from open orders means TWS no longer considers the order
+    live — it was cancelled either via API or manually in TWS.
+
+    Returns:
+        (updated df, count of rows newly cancelled)
+    """
+    cancelled_count = 0
+    cancelled_at    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    for i, row in df.iterrows():
+        if is_trade_historical(row):
+            continue  # already fully resolved — skip
+
+        if int(row["parent_order_id"]) in open_order_ids:
+            continue  # still live in TWS — skip
+
+        # Not in open orders and not historical → was cancelled
+        df.at[i, "parent_status"]    = "Cancelled"
+        df.at[i, "parent_filled_at"] = cancelled_at
+        df.at[i, "sl_status"]        = "Cancelled"
+        df.at[i, "sl_filled_at"]     = cancelled_at
+        df.at[i, "tp_status"]        = "Cancelled"
+        df.at[i, "tp_filled_at"]     = cancelled_at
+
+        print(f"🚫 {row['symbol']} marked Cancelled "
+              f"(Parent ID: {int(row['parent_order_id'])})")
+        cancelled_count += 1
+
+    return df, cancelled_count
+
+
+async def track_cancellations_async() -> None:
+    """
+    Second-pass workflow: detect orders that were cancelled in TWS
+    (manually or via API) and update 3_placed_orders.csv accordingly.
+
+    Strategy:
+      - Fetch all currently open orders from TWS
+      - Any row in our CSV that is still active but whose parent order ID
+        is absent from the open orders list was cancelled
+      - Mark parent + both children as Cancelled and save
+
+    Does NOT write to 4_trades.csv — cancelled parents have no P&L to record.
+
+    Note: reqAllOpenOrdersAsync returns orders from all client IDs, so
+    manually cancelled orders in TWS are included regardless of how they
+    were cancelled.
+    """
+    # 1. Reload placed orders fresh — track_orders_async may have updated the file
+    if not PLACED_ORDERS_FILE.exists():
+        print(f"❌ {PLACED_ORDERS_FILE} not found.")
+        return
+
+    df       = load_placed_orders(PLACED_ORDERS_FILE)
+    df_active = get_active_rows(df)
+
+    if df_active.empty:
+        print("✅ No active orders remaining — cancellation check skipped.")
+        return
+
+    print(f"🔍 Checking cancellations for {len(df_active)} active order(s)...")
+
+    # 2. Fetch all currently open orders from TWS
+    ib = IB()
+    try:
+        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+        open_trades = await ib.reqAllOpenOrdersAsync()
+        print(f"📡 Received {len(open_trades)} open order(s) from TWS.")
+    finally:
+        ib.disconnect()
+
+    # 3. Build set of all order IDs still live in TWS
+    # reqAllOpenOrdersAsync returns Trade objects — each has an order with orderId
+    open_order_ids = {t.order.orderId for t in open_trades}
+
+    # 4. Mark cancelled rows in the dataframe
+    df, cancelled_count = apply_cancellations_to_df(df, open_order_ids)
+
+    if cancelled_count == 0:
+        print("✅ No cancellations detected.")
+        return
+
+    # 5. Save updated 3_placed_orders.csv
+    save_placed_orders(df, PLACED_ORDERS_FILE)
+
+
+# ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
 
@@ -380,5 +483,15 @@ async def track_orders_async() -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 
+async def _main():                                      # <-- change: added to run both workflows
+    await track_orders_async()
+    await track_cancellations_async()
+
+
+def track_orders():
+    """Synchronous wrapper — runs fill tracking then cancellation tracking."""
+    asyncio.run(_main())                                # <-- change: was asyncio.run(track_orders_async())
+
+
 if __name__ == "__main__":
-    asyncio.run(track_orders_async())
+    asyncio.run(_main())                                # <-- change: was asyncio.run(track_orders_async())
