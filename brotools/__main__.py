@@ -3,325 +3,94 @@ import time
 import glob
 import asyncio
 import json
+import importlib
 import pandas as pd
 
 from datetime import datetime
 from ib_async import *
 from pprint import pprint
-from dataclasses import asdict # ib_async objects are often dataclasses so they can be easily converted to dicts for JSON serialization
-from decimal import Decimal
 
-from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
-from brotools.strat_gap_rise import strategy
+from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID, STRATEGY_FILE
+from brotools.services import get_report_async, save_data_async, place_orders_async
 
-def load_tickers():
-    with open('DATA/results.json', 'r') as f:
-        symbols = json.load(f)
-        
-    tickers = [t['symbol'] for t in symbols]
-    
-    return tickers
+# Make sure strategy file exists before running
+module_name = STRATEGY_FILE.replace('.py', '')
+try:
+    strategy_module = importlib.import_module(f"brotools.strategies.{module_name}")
+    Strategy = strategy_module.Strategy
+except (ModuleNotFoundError, AttributeError) as e:
+    raise RuntimeError(f"Could not load strategy '{module_name}': {e}")
 
-async def get_data_async():
-    ib = IB()
-    try:
-        # 1. Connect ONCE using the async method
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
-        tickers = load_tickers()
-        
+def get_scan():
+    with Strategy() as strategy:
+        scan_result = asyncio.run(get_report_async(strategy))
+        if scan_result is not None:
+            scan_result.to_csv("DATA/1_scan_results.csv", index=False)
+            print(f"Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
+
+def get_data() -> None:
+    # Retreive price data for a list of tickers
+    #TODO Add timeframe and back_days as parameters from Strategy class
+    #tickers = load_tickers_from_results()
+    tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
+    asyncio.run(save_data_async(tickers))
+
+def add_indicators() -> None:
+    strategy = Strategy()
+    tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
+    with Strategy() as strategy:
         for ticker in tickers:
-            # Check if ticker is a conId (int) or symbol (str) based on our previous talk
-            if isinstance(ticker, int):
-                contract = Stock(conId=ticker)
-            else:
-                contract = Stock(ticker, "SMART", "USD")
-
-            # 2. Qualify the contract to ensure we have the right details
-            await ib.qualifyContractsAsync(contract)
-            print(f"Fetching data for {contract.symbol}...")
-
-            # 3. Use the Async version of historical data request
-            bars = await ib.reqHistoricalDataAsync(
-                contract,
-                endDateTime="",
-                durationStr="2 D",
-                barSizeSetting="1 min",
-                whatToShow="TRADES",
-                useRTH=False  # Crucial for Gaps: gets Pre-Market data
-            )
-
-            if bars:
-                df = util.df(bars)
-                filename = f"DATA/{contract.symbol}_1min_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-                df.to_csv(filename, index=False)
-                print(f"Saved {len(bars)} rows to {filename}")
-            else:
-                print(f"No data returned for {contract.symbol}")
-
-            # 4. Small sleep to avoid hitting IBKR pacing violations
-            await asyncio.sleep(0.1)
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-    finally:
-        # 5. Always disconnect in the finally block
-        ib.disconnect()
-
-def getdata():
-    asyncio.run(get_data_async())
-
-async def get_report_async():
-    ib = IB()
-    try:
-        # 1. Use connectAsync
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-        #sub = ScannerSubscription(
-        #    numberOfRows=30,
-        #    instrument='STK',
-        #    locationCode='STK.NASDAQ',
-        #    #scanCode='TOP_PERC_GAIN',
-        #    scanCode='HIGH_OPEN_GAP',
-        #    abovePrice=2,
-        #    belowPrice=20,
-        #    aboveVolume=10000000)
-        sub = ScannerSubscription()
-        sub.numberOfRows = 50
-        sub.instrument   = 'STK'
-        sub.locationCode = 'STK.US.MAJOR'
-        sub.scanCode    = 'TOP_PERC_GAIN'        
-        #sub.scanCode     = 'HIGH_OPEN_GAP'
-        sub.abovePrice   = 10
-        sub.belowPrice   = 200
-        sub.aboveVolume  = 100000        # 1 Millions transactions, 100 000 is 100k, 10 000 is 10k
-        sub.marketCapAbove = 300         # Small Market Capitalisation and above
-        #sub.marketCapBelow = 10000      # Medium Market Capitalisation and below (Excludes large cap that start at 10 000)        
-
-        # 2. Use reqScannerDataAsync to wait for the results
-        print("Requesting scanner data...")
-        scanData = await ib.reqScannerDataAsync(sub)    
-
-        results = [
-            {
-                "rank": d.rank,
-                "conId": d.contractDetails.contract.conId,
-                "symbol": d.contractDetails.contract.symbol,
-                "localSymbol": d.contractDetails.contract.localSymbol,
-                "tradingClass": d.contractDetails.contract.tradingClass
-            }
-            for d in scanData
-        ]
-        
-        # 3. Save to file
-        with open('DATA/results.json', 'w') as f:
-            json.dump(results, f, indent=4)
+            df_data = pd.read_csv(
+                f"DATA/{ticker}.csv", 
+                index_col="date",  # Sets this column as the row labels (index)
+                parse_dates=["date"]  # Forces pandas to convert strings to true Timestamp objects
+            )     
             
-        print(f"Success: {len(results)} items saved to DATA/results.json")
-    except Exception as e:
-        print(f"Error during scan: {e}")
-    finally:
-        # 4. Always disconnect
-        ib.disconnect()    
-
-def getreport():
-    asyncio.run(get_report_async())
+            df_data = strategy.add_indicators(df_data)
+            df_data.to_csv(f'DATA/{ticker}.csv')
+            print(df_data.head())     
    
-def signals():
-    # Loop through json in rank order 
-    # Open minute data csv file in pandas
-    # Calculate gap and percentage
-    # Look at 3 candles
-    # if all positive add to buy list
+def get_signals():
+    csv_path = "DATA/1_scan_results.csv"
+    df_scan_results = pd.read_csv(csv_path)
+    tickers = df_scan_results["symbol"].tolist()
     
-    # Load resulst.json
-    prospects = load_tickers()
-    buy_signals = []
-    for prospect in prospects:
-        csv_files = glob.glob(f"DATA/{prospect}_1min_*.csv")
-        if len(csv_files) > 0:
-            df = pd.read_csv(csv_files[0])
-        else:
-            continue
-        # TODO: Add error handling
-        buy_signal = strategy(prospect, df, gap_threshold=5.0)
-        
-        if buy_signal is None:
-            continue
-        
-        buy_signals.append(buy_signal)
-
-    with open('DATA/buy_signals.json', 'w') as f:
-        json.dump(buy_signals, f, indent=4)
-
-def create_bracket_order(qte, estimated_buy_price):
-    # Build a bracket order to be called with a contract later in the code
-    # use a small sleep() delay since we are in synchronous mode
-    #parent = LimitOrder('BUY', qte, limit_price)
-    parent = MarketOrder('BUY', 1, tif='GTC', transmit=False)
-    # parent.orderId = ib.client.getReqId()
+    trace_data_list = []
+    with Strategy() as strategy:
+        for ticker in tickers:
+            df_data = pd.read_csv(f"DATA/{ticker}.csv", index_col="date", parse_dates=["date"]) 
+            conditions_trace = strategy.is_buy_signal(df_data)
+            trace_data_list.append(conditions_trace)
     
-    # Stop loss
-    stop_price = round(estimated_buy_price * 0.98, 2)
-    stopLoss = StopOrder('SELL', qte, stop_price, tif='GTC', transmit = False)
-
-    # Take profit
-    target_price = round(estimated_buy_price * 1.05, 2)
-    takeProfit = LimitOrder('SELL', qte, target_price, tif='GTC', transmit = True)
-
-    return parent, stopLoss, takeProfit
-
-def save_orders_to_json(orders_list, filename='DATA/submitted_orders.json'):
-    """Converts ib_async Order objects to dictionaries and saves to JSON."""
+    # House keeping to save data columns in specific order
+    df_traces = pd.DataFrame(trace_data_list)
+    df_scan_results = df_scan_results.set_index("symbol")
+    df_traces = df_traces.set_index("symbol")
+    df_scan_results = df_traces.combine_first(df_scan_results)
     
-    def decimal_default(obj):
-        if isinstance(obj, Decimal):
-            return float(obj) # Convert Decimals to floats for JSON compatibility
-        raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
-
-    serializable_orders = []
-    for order_group in orders_list:
-        p = asdict(order_group["parent"])
-        s = asdict(order_group["stop_loss"])
-        t = asdict(order_group["take_profit"])
-
-        entry = {
-            "symbol": order_group["symbol"],
-            # parent
-            "p_orderId": p["orderId"],
-            "p_action": p["action"],
-            "p_totalQuantity": p["totalQuantity"],
-            "p_orderType": p["orderType"],
-            "p_lmtPrice": p["lmtPrice"],
-            "p_auxPrice": p["auxPrice"],
-            "p_tif": p["tif"],
-            "p_outsideRth": p["outsideRth"],
-
-            # stop loss
-            "s_orderId": s["orderId"],
-            "s_action": s["action"],
-            "s_totalQuantity": s["totalQuantity"],
-            "s_orderType": s["orderType"],
-            "s_lmtPrice": s["lmtPrice"],
-            "s_auxPrice": s["auxPrice"],
-            "s_tif": s["tif"],
-            "s_parentId": s["parentId"],
-            "s_outsideRth": s["outsideRth"],
-
-            # take profit
-            "t_orderId": t["orderId"],
-            "t_action": t["action"],
-            "t_totalQuantity": t["totalQuantity"],
-            "t_orderType": t["orderType"],
-            "t_lmtPrice": t["lmtPrice"],
-            "t_auxPrice": t["auxPrice"],
-            "t_tif": t["tif"],
-            "t_parentId": t["parentId"],
-            "t_outsideRth": t["outsideRth"],
-        }
-
-        serializable_orders.append(entry)
-    
-    with open(filename, 'w') as f:
-        json.dump(serializable_orders, f, indent=4, default=decimal_default)
-    print(f"📂 Saved {len(orders_list)} order brackets to {filename}")
-    
-async def place_orders_async():
-    ib = IB()
-    orders = []
-    try:
-        # 1. Connect ONCE outside the loop and load buy signals
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-        df_signals = pd.read_json('DATA/buy_signals.json')
-        df_signals = df_signals[df_signals['threshold_reached'] == True]
-        
-        for index, signal in df_signals.iterrows():
-            contract = Stock(signal['symbol'], 'SMART', 'USD')
-            
-            # 2. Qualify the contract (Crucial for ib_async)
-            await ib.qualifyContractsAsync(contract)
-            
-            qte = 1
-            estimated_buy_price = round(signal['open_curr'], 2)
-            
-            # 3. Build orders
-            parent, stop_loss, take_profit = create_bracket_order(qte, estimated_buy_price)
-            
-            # 4. Place parent first to generate its orderId
-            ib.placeOrder(contract, parent)
-            
-            # Link children to parentId
-            stop_loss.parentId = parent.orderId
-            take_profit.parentId = parent.orderId
-            
-            # Place children
-            ib.placeOrder(contract, stop_loss)
-            ib.placeOrder(contract, take_profit)
-            
-            order = {"symbol":signal['symbol'], "parent": parent, "stop_loss": stop_loss, "take_profit": take_profit}
-            orders.append(order)
-                    
-            # Small async sleep to let the event loop process network traffic
-            await asyncio.sleep(0.5)
-            
-            print(f"✅ Bracket submitted for {signal['symbol']} (Parent ID: {parent.orderId})")
-
-    except Exception as e:
-        #TODO: Do we want to track ordaers that failed in our file?
-        print(f"❌ Error: {e}")
-    finally:
-        # 5. Disconnect AFTER all loop iterations are done
-        ib.disconnect()
-        if len(orders) > 0:
-            save_orders_to_json(orders)
-    
+    df_scan_results = df_scan_results.reset_index()
+    front_cols = ["rank", "symbol", "conId", "localSymbol", "tradingClass"]
+    original_cols = [col for col in front_cols if col in df_scan_results.columns]
+    other_cols = [col for col in df_scan_results.columns if col not in original_cols]
+    df_scan_results = df_scan_results[original_cols + other_cols]
+    df_scan_results.to_csv("DATA/2_buy_signals.csv", index=False)
+     
+    buy_signals = df_scan_results[df_scan_results["buy_signal"] == True]["symbol"].tolist()
+    print(buy_signals)    
+  
 def place_orders():
     asyncio.run(place_orders_async())
 
-async def monitor_trades_async():
-    ib = IB()   
-    try:
-        # 1. Connect ONCE outside the loop and load buy signals
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-        
-        #await ib.reqAllOpenOrders()  # Only call this if there is probability of IB() not obtaining orders on connect.
-
-        print("--- Active Orders ---")
-        idx = 1
-        for trade in ib.trades():
-            print("========================================================================================")
-            print(f"Trade #:{idx}")
-            print(trade) 
-            idx += 1
-             
-    except Exception as e:
-        print(f"❌ Error: {e}")              
-    finally:    
-        ib.disconnect()
-    
-def track_orders_and_positions():
-    # get IBKR Open Positions
-    # get IBKR trades for the day ?
-    # Log trades with P&L in a csv file
-    asyncio.run(monitor_trades_async())
-    
-def close_positions():
-    ib = IB()
-    ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-    
-    # --- Cancel all open orders ---
-    open_orders = ib.openOrders()
-    for o in open_orders:
-        ib.cancelOrder(o)
-        print(f"Cancelled order: {o.action} {o.totalQuantity} {o.orderType}")    
-    
-    ib.disconnect()
-    
 def main():
     print("Hello, BroTools!")
     print("This is the main entry point of the application.")
-    # You can add more functionality here as needed.
+    print("Live trading not implemented, use commands:")
+    print("  scan: get market scanner and save results")
+    print("  data: get historical price data for tickers in scan results")
+    print("  indicators: add technical indicators to price data")
+    print("  signals: generate buy signals based on indicators and save to file")
+    print("  orders: place orders for buy signals")
     
 if __name__ == "__main__":
     main()

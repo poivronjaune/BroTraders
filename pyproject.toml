@@ -30,10 +30,11 @@ classifiers = [
 packages = ["brotools"]
 
 [project.scripts]
-strategy = "brotools.__init__:choose_strategy"
-report = "brotools.__main__:getreport"
-getdata = "brotools.__main__:getdata"
-signals = "brotools.__main__:signals"
+scan = "brotools.__main__:get_scan"
+getdata = "brotools.__main__:get_data"
+indicators = "brotools.__main__:add_indicators"
+signals = "brotools.__main__:get_signals"
 orders = "brotools.__main__:place_orders"
-track = "brotools.__main__:track_orders_and_positions"
-close = "brotools.__main__:close_positions"
+track = "brotools.track_orders:track_orders"
+clean = "brotools.datacleaning:clean_historical_data"
+run_live = "brotools.__init__:live_trades"
