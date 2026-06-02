@@ -33,8 +33,7 @@ def clean_historical_data():
         current_dt_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print("❌ Error: Missing required parameter '-end_bound'.")
         print("\n💡 Usage Example:")
-        print(f'   poetry run clean -end_bound "{current_dt_str}"')
-        print(f'   poetry run clean -end_bound "2026-05-29 20:00:00"')
+        print(f'   clean -end_bound "{current_dt_str}"')
         return
 
     # Extract the target tickers from scan results
