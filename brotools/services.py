@@ -19,8 +19,16 @@ from pathlib import Path
 import pandas as pd
 from ib_async import IB, Stock, util, MarketOrder, LimitOrder, StopOrder
 
+
+
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
-from brotools.strategies.gap_rise import Strategy
+from brotools.protocols import StrategyProtocol
+#from brotools.strategies.gap_rise import Strategy
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: # JUst for editor type hints, no runtime import
+    from brotools.strategies.gap_rise import Strategy
+
 
 # ---------------------------------------------------------------------------
 # File paths
@@ -190,7 +198,7 @@ async def place_order_async(ib: IB, item: dict) -> dict:
 # Async orchestrators
 # ---------------------------------------------------------------------------
 
-async def get_report_async(strategy: Strategy) -> pd.DataFrame | None:
+async def get_report_async(strategy: StrategyProtocol) -> pd.DataFrame | None:
     """
     Run an IBKR scanner using the provided strategy and return results.
 

@@ -26,6 +26,7 @@ def get_scan():
     with Strategy() as strategy:
         scan_result = asyncio.run(get_report_async(strategy))
         if scan_result is not None:
+            scan_result["strategy"] = strategy.name
             scan_result.to_csv("DATA/1_scan_results.csv", index=False)
             print(f"Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
 
