@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "BroTraders"
+version = "1.0.0"
+description = "Simple tools for algorithmic trading using IBKR TWS API"
+authors = [
+    { name = "Robert Boivin", email = "poivronjaune@gmail.com" },
+    { name = "Marc Boivin", email = "grosplombs@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+dependencies = [
+    # "/TWS API/source/pythonclient", # This installs protobuf, which is a dependency of ibapi
+    "pandas",
+    "ib_async",
+    "pytz"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["brotools"]
+
+[project.scripts]
+scan = "brotools.__main__:get_scan"
+getdata = "brotools.__main__:get_data"
+indicators = "brotools.__main__:add_indicators"
+signals = "brotools.__main__:get_signals"
+orders = "brotools.__main__:place_orders"
+track = "brotools.track_orders:track_orders"
+clean = "brotools.datacleaning:clean_historical_data"
+run_live = "brotools.__init__:live_trades"
