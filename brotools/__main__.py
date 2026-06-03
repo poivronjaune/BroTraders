@@ -38,7 +38,6 @@ def get_data() -> None:
     asyncio.run(save_data_async(tickers))
 
 def add_indicators() -> None:
-    strategy = Strategy()
     tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
     with Strategy() as strategy:
         for ticker in tickers:
