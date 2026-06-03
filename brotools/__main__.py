@@ -19,16 +19,23 @@ try:
     strategy_module = importlib.import_module(f"brotools.strategies.{module_name}")
     Strategy = strategy_module.Strategy
 except (ModuleNotFoundError, AttributeError) as e:
-    raise RuntimeError(f"Could not load strategy '{module_name}': {e}")
+    raise RuntimeError(f"❌ Could not load strategy '{module_name}': {e}")
 
 
 def get_scan():
     with Strategy() as strategy:
-        scan_result = asyncio.run(get_report_async(strategy))
-        if scan_result is not None:
-            scan_result["strategy"] = strategy.name
-            scan_result.to_csv("DATA/1_scan_results.csv", index=False)
-            print(f"Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
+        try:
+            scan_result = asyncio.run(get_report_async(strategy))
+        except Exception as e:
+            print(f"❌ Error during market scan: {e}")
+            sys.exit(1)
+    
+    if scan_result is not None:
+        scan_result["strategy"] = strategy.name
+        scan_result.to_csv("DATA/1_scan_results.csv", index=False)
+        print(f"✅ Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
+    else:
+        print("❌ No scan results to save.")
 
 def get_data() -> None:
     # Retreive price data for a list of tickers

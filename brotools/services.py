@@ -229,6 +229,8 @@ async def get_report_async(strategy: StrategyProtocol) -> pd.DataFrame | None:
         ]
         df = pd.DataFrame(results)
 
+    except ConnectionRefusedError:
+        print(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
     except Exception as e:
         print(f"❌ Error during scan: {e}")
 
@@ -260,38 +262,45 @@ async def save_data_async(
         print("Get Data Started")
 
         for ticker in tickers:
-            # Accept either a conId (int) or a symbol string
-            if isinstance(ticker, int):
-                contract = Stock(conId=ticker)
-            else:
-                contract = Stock(ticker, "SMART", "USD")
+            try:
+                # Accept either a conId (int) or a symbol string
+                if isinstance(ticker, int):
+                    contract = Stock(conId=ticker)
+                else:
+                    contract = Stock(ticker, "SMART", "USD")
 
-            await ib.qualifyContractsAsync(contract)
-            print(f"Fetching data for {contract.symbol}...")
+                await ib.qualifyContractsAsync(contract)
+                print(f"Fetching data for {contract.symbol}...")
 
-            bars = await ib.reqHistoricalDataAsync(
-                contract,
-                endDateTime="",
-                durationStr="2 D",
-                barSizeSetting="1 min",
-                whatToShow="TRADES",
-                useRTH=False,   # include pre-market data — required for gap detection
-            )
+                bars = await ib.reqHistoricalDataAsync(
+                    contract,
+                    endDateTime="",
+                    durationStr="2 D",
+                    barSizeSetting="1 min",
+                    whatToShow="TRADES",
+                    useRTH=False,   # include pre-market data — required for gap detection
+                )
 
-            if bars:
-                df = util.df(bars)
-                df["symbol"] = contract.symbol
-                filepath = HISTORICAL_DATA_DIR / f"{contract.symbol}.csv"
-                df.to_csv(filepath, index=False)
-                print(f"💾 Saved {len(bars)} rows to {filepath}")
-            else:
-                print(f"⚠️  No data returned for {contract.symbol}")
+                if bars:
+                    df = util.df(bars)
+                    df["symbol"] = contract.symbol
+                    filepath = HISTORICAL_DATA_DIR / f"{contract.symbol}.csv"
+                    df.to_csv(filepath, index=False)
+                    print(f"💾 Saved {len(bars)} rows to {filepath}")
+                else:
+                    print(f"⚠️  No data returned for {contract.symbol}")
+            except Exception as e:
+                print(f"❌ Error fetching data for {ticker}: {e}")
+                # Continue to next ticker without stopping the whole process
 
             # Small sleep to avoid IBKR pacing violations
             await asyncio.sleep(0.1)
+    
+    except ConnectionRefusedError:
+        print(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
 
     except Exception as e:
-        print(f"❌ An error occurred: {e}")
+        print(f"❌ Unexpected connection error -- {type(e).__name__}: {e}")
 
     finally:
         ib.disconnect()

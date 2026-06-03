@@ -243,8 +243,9 @@ Added a new column in the scan results to keep track of the strategy name used f
 <hr>
 
 
-## 2. Duplicate `Strategy` instantiation in `add_indicators()`
-
+## 2. Duplicate `Strategy` instantiation in `add_indicators()`  
+Status: Fixed    
+  
 ### Problem summary
 
 In `brotools/__main__.py`, the `add_indicators()` function instantiates the
@@ -360,6 +361,10 @@ def add_indicators() -> None:
 ```
 
 ---
+
+<hr>
+<hr>
+<hr>
 
 ## 3. Replace bare `except Exception` in async service functions
 

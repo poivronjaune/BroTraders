@@ -1,6 +1,6 @@
 IBKR_HOST = '127.0.0.1'
 IBKR_PORT = 7497      # Trader Work Station (TWS)
-# IBKR_PORT = 4002      # IB_GATEWAY
+#IBKR_PORT = 4002      # IB_GATEWAY
 IBKR_CLIENT_ID = 0
 STRATEGY_FILE = "gap_rise.py"
 #STRATEGY_FILE = "stub_strategy.py"
