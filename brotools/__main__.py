@@ -70,6 +70,7 @@ def add_indicators() -> None:
    
 def get_signals():
     configure_logging()
+    create_folders_for_data()
     csv_path = "DATA/1_scan_results.csv"
     df_scan_results = pd.read_csv(csv_path)
     tickers = df_scan_results["symbol"].tolist()
@@ -99,6 +100,7 @@ def get_signals():
 
 def place_orders():
     configure_logging()
+    create_folders_for_data()
     asyncio.run(place_orders_async())
 
 def main():
