@@ -7,17 +7,17 @@ Items are grouped by category and ordered roughly by priority within each group.
 
 ## 🐍 Python Practices
 
-- [ ] **Fix hard-coded strategy import in `services.py`** (line 23):
+- [✅] ~~**Fix hard-coded strategy import in `services.py`** (line 23):
   `from brotools.strategies.gap_rise import Strategy` defeats the dynamic strategy
   loader in `__main__.py`. Switching `STRATEGY_FILE` in `config.py` won't fully
-  work. Use the same `importlib` pattern as `__main__.py`.
-- [ ] **Remove duplicate `Strategy` instantiation** in `add_indicators()`
-  (`__main__.py` lines 40 and 42). The first instantiation is dead code.
-- [ ] **Replace bare `except Exception`** in `get_report_async`, `save_data_async`,
+  work. Use the same `importlib` pattern as `__main__.py`.~~
+- [✅] ~~**Remove duplicate `Strategy` instantiation** in `add_indicators()`
+  (`__main__.py` lines 40 and 42). The first instantiation is dead code.~~
+- [✅] ~~**Replace bare `except Exception`** in `get_report_async`, `save_data_async`,
   and `place_orders_async`. They swallow everything so partial failures look
-  like success. Catch specific exceptions and re-raise or log with context.
-- [ ] **Add a logging framework** — replace `print(...)` calls with the `logging`
-  module, with file handlers for audit trails (essential for live trading).
+  like success. Catch specific exceptions and re-raise or log with context.~~
+- [✅] ~~**Add a logging framework** — replace `print(...)` calls with the `logging`
+  module, with file handlers for audit trails (essential for live trading).~~
 - [ ] **Add type hints** on most functions (only a few have them today).
 - [ ] **Add tests** — there are no unit or integration tests. The pure functions
   in `trading_rules.py` and `trading_indicators.py` are easy wins.
@@ -31,11 +31,7 @@ Items are grouped by category and ordered roughly by priority within each group.
   `py -m pip install -e .`.
 - [ ] **Replace manual `sys.argv` parsing** in `datacleaning.py` with
   `argparse`, `click`, or `typer`.
-- [ ] **Remove unused `pytz` dependency** from `pyproject.toml` (declared but
-  never imported).
-- [ ] **Implement or remove `live_trades()` stub** in `__init__.py` — it is
-  wired to the `run_live` console script but only prints
-  `"Not implemented yet...."`.
+- [✅] ~~**Remove unused `pytz` dependency** from `pyproject.toml` (declared but never imported).~~
 
 ---
 

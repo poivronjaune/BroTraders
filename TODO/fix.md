@@ -366,8 +366,9 @@ def add_indicators() -> None:
 <hr>
 <hr>
 
-## 3. Replace bare `except Exception` in async service functions
-
+## 3. Replace bare `except Exception` in async service functions  
+Status: Fixed  
+  
 ### Problem summary
 
 In `brotools/services.py`, all three async orchestrators (`get_report_async`,
@@ -486,8 +487,9 @@ def get_scan():
 
 ---
 
-## 4. Add a logging framework
-
+## 4. Add a logging framework  
+Status: Fixed  
+  
 ### Problem summary
 
 All feedback to the user is delivered via `print()` calls scattered across
@@ -1116,8 +1118,9 @@ clean --help
 
 ---
 
-## 12. Remove unused `pytz` dependency
-
+## 12. Remove unused `pytz` dependency  
+Status: Fixed  
+  
 ### Problem summary
 
 `pyproject.toml` lists `pytz` as a runtime dependency, but `pytz` is never
