@@ -1,17 +1,16 @@
 import sys
-import time
-import glob
 import asyncio
-import json
 import importlib
+import logging
 import pandas as pd
 
-from datetime import datetime
 from ib_async import *
-from pprint import pprint
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID, STRATEGY_FILE
 from brotools.services import get_report_async, save_data_async, place_orders_async
+from brotools.log_config import configure_logging
+
+logger = logging.getLogger(__name__)
 
 # Make sure strategy file exists before running
 module_name = STRATEGY_FILE.replace('.py', '')
@@ -23,21 +22,24 @@ except (ModuleNotFoundError, AttributeError) as e:
 
 
 def get_scan():
+    configure_logging()
     with Strategy() as strategy:
         try:
             scan_result = asyncio.run(get_report_async(strategy))
         except Exception as e:
-            print(f"❌ Error during market scan: {e}")
+            logger.error(f"❌ Error during market scan: {e}", exc_info=True)
             sys.exit(1)
     
     if scan_result is not None:
         scan_result["strategy"] = strategy.name
         scan_result.to_csv("DATA/1_scan_results.csv", index=False)
-        print(f"✅ Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
+        logger.info(f"✅ Scan report saved {len(scan_result)} prospects to DATA/1_scan_results.csv")
     else:
-        print("❌ No scan results to save.")
+        logger.warning("⚠️ No scan results to save.")
+
 
 def get_data() -> None:
+    configure_logging()
     # Retreive price data for a list of tickers
     #TODO Add timeframe and back_days as parameters from Strategy class
     #tickers = load_tickers_from_results()
@@ -45,6 +47,7 @@ def get_data() -> None:
     asyncio.run(save_data_async(tickers))
 
 def add_indicators() -> None:
+    configure_logging()
     tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
     with Strategy() as strategy:
         for ticker in tickers:
@@ -56,9 +59,9 @@ def add_indicators() -> None:
             
             df_data = strategy.add_indicators(df_data)
             df_data.to_csv(f'DATA/{ticker}.csv')
-            print(df_data.head())     
    
 def get_signals():
+    configure_logging()
     csv_path = "DATA/1_scan_results.csv"
     df_scan_results = pd.read_csv(csv_path)
     tickers = df_scan_results["symbol"].tolist()
@@ -84,9 +87,10 @@ def get_signals():
     df_scan_results.to_csv("DATA/2_buy_signals.csv", index=False)
      
     buy_signals = df_scan_results[df_scan_results["buy_signal"] == True]["symbol"].tolist()
-    print(buy_signals)    
-  
+    logger.info(f"✅ Buy signals identified for tickers: {buy_signals}")
+
 def place_orders():
+    configure_logging()
     asyncio.run(place_orders_async())
 
 def main():

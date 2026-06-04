@@ -13,29 +13,29 @@ construction without touching the IB connection, keeping async surface minimal.
 """
 
 import asyncio
+import logging
+import pandas as pd
+
 from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
 from ib_async import IB, Stock, util, MarketOrder, LimitOrder, StopOrder
-
-
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 from brotools.protocols import StrategyProtocol
-#from brotools.strategies.gap_rise import Strategy
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING: # JUst for editor type hints, no runtime import
     from brotools.strategies.gap_rise import Strategy
 
-
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # File paths
 # ---------------------------------------------------------------------------
+HISTORICAL_DATA_DIR = Path("DATA")
 BUY_SIGNALS_FILE   = Path("DATA/2_buy_signals.csv")
 PLACED_ORDERS_FILE = Path("DATA/3_placed_orders.csv")
-HISTORICAL_DATA_DIR = Path("DATA")
+
 
 # ---------------------------------------------------------------------------
 # Order parameters
@@ -150,7 +150,8 @@ def save_placed_orders(placed_orders: list[dict], filepath: Path) -> None:
         filepath, mode="a", header=write_header, index=False
     )
 
-    print(f"💾 Saved {len(rows)} placed order(s) to {filepath}")
+    logger.info(f"💾 Saved {len(rows)} rows to {filepath}" )
+
 
 
 # ---------------------------------------------------------------------------
@@ -184,7 +185,7 @@ async def place_order_async(ib: IB, item: dict) -> dict:
     tp_trade = ib.placeOrder(contract, tp)
     await asyncio.sleep(0)          # yield → TWS acks children
 
-    print(f"✅ {item['symbol']} submitted (Parent ID: {parent.orderId})")
+    logger.info(f"✅ {item['symbol']} submitted (Parent ID: {parent.orderId})")
 
     return {
         "symbol":       item["symbol"],
@@ -214,7 +215,6 @@ async def get_report_async(strategy: StrategyProtocol) -> pd.DataFrame | None:
 
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
 
-        print("Requesting scanner data...")
         scan_data = await ib.reqScannerDataAsync(scanner)
 
         results = [
@@ -230,12 +230,13 @@ async def get_report_async(strategy: StrategyProtocol) -> pd.DataFrame | None:
         df = pd.DataFrame(results)
 
     except ConnectionRefusedError:
-        print(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
+        logger.error(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
     except Exception as e:
-        print(f"❌ Error during scan: {e}")
+        logger.error(f"❌ Error during scan: {e}")
 
     finally:
         ib.disconnect()
+        logger.info("✅ Disconnected from IB")
 
     return df
 
@@ -259,7 +260,6 @@ async def save_data_async(
 
     try:
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-        print("Get Data Started")
 
         for ticker in tickers:
             try:
@@ -270,7 +270,7 @@ async def save_data_async(
                     contract = Stock(ticker, "SMART", "USD")
 
                 await ib.qualifyContractsAsync(contract)
-                print(f"Fetching data for {contract.symbol}...")
+                logger.info(f"💾 Fetching data for {contract.symbol}...")
 
                 bars = await ib.reqHistoricalDataAsync(
                     contract,
@@ -286,21 +286,21 @@ async def save_data_async(
                     df["symbol"] = contract.symbol
                     filepath = HISTORICAL_DATA_DIR / f"{contract.symbol}.csv"
                     df.to_csv(filepath, index=False)
-                    print(f"💾 Saved {len(bars)} rows to {filepath}")
+                    logger.info(f"💾 Saved {len(bars)} rows to {filepath}")
                 else:
-                    print(f"⚠️  No data returned for {contract.symbol}")
+                    logger.warning(f"⚠️  No data returned for {contract.symbol}")
             except Exception as e:
-                print(f"❌ Error fetching data for {ticker}: {e}")
+                logger.error(f"❌ Error fetching data for {ticker}: {e}")
                 # Continue to next ticker without stopping the whole process
 
             # Small sleep to avoid IBKR pacing violations
             await asyncio.sleep(0.1)
     
     except ConnectionRefusedError:
-        print(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
+        logger.error(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
 
     except Exception as e:
-        print(f"❌ Unexpected connection error -- {type(e).__name__}: {e}")
+        logger.error(f"❌ Unexpected connection error -- {type(e).__name__}: {e}")
 
     finally:
         ib.disconnect()
@@ -317,17 +317,17 @@ async def place_orders_async() -> None:
     """
     # --- All sync preparation before opening IB connection ---
     if not BUY_SIGNALS_FILE.exists():
-        print(f"❌ {BUY_SIGNALS_FILE} not found.")
+        logger.error(f"❌ {BUY_SIGNALS_FILE} not found.")
         return
 
     df_signals = load_buy_signals(BUY_SIGNALS_FILE)
 
     if df_signals.empty:
-        print("⚠️  No buy signals detected. Order placement skipped.")
+        logger.warning("⚠️  No buy signals detected. Order placement skipped.")
         return
 
     order_items = build_buy_orders(df_signals)
-    print(f"📋 {len(order_items)} signal(s) prepared, connecting to IB...")
+    logger.info(f"📋 {len(order_items)} signal(s) prepared, connecting to IB...")
 
     # --- Open IB connection only after all data prep is validated ---
     ib = IB()
@@ -341,7 +341,7 @@ async def place_orders_async() -> None:
                 result = await place_order_async(ib, item)
                 placed_orders.append(result)
             except Exception as e:
-                print(f"❌ {item['symbol']} failed: {e}")
+                logger.error(f"❌ {item['symbol']} failed: {e}")
 
         # Wait for all parents to reach a stable status before saving
         for result in placed_orders:

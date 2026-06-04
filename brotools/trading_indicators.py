@@ -1,5 +1,8 @@
+import logging
 import pandas as pd
 from datetime import time
+
+logger = logging.getLogger(__name__)
 
 def prev_day_closing_bar(df_prices: pd.DataFrame, open_time="09:30", close_time="16:00"):
     last_day = df_prices.index.date.max()

@@ -13,14 +13,20 @@ Run this script independently from the order-placement script.
 """
 
 import asyncio
+import logging
+import pandas as pd
+
 from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
 from ib_async import IB, ExecutionFilter
 
 from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
+from brotools.log_config import configure_logging
 
+
+logger = logging.getLogger(__name__)
+configure_logging()
 # ---------------------------------------------------------------------------
 # File paths
 # ---------------------------------------------------------------------------
@@ -66,8 +72,8 @@ def load_placed_orders(filepath: Path) -> pd.DataFrame:
     if "submitted_at" not in df.columns:
         fallback = datetime.now().strftime("%Y-%m-%d 00:00:00")
         df["submitted_at"] = fallback
-        print(f"⚠️  No submitted_at column found — defaulting to {fallback} "
-              f"for all rows. Consider adding submitted_at to your CSV.")
+        logger.warning(f"⚠️  No submitted_at column found — defaulting to {fallback} for all rows")
+
 
     # Add missing timestamp columns — explicitly typed as object so string
     # timestamps can be written later without pandas dtype conflicts.
@@ -241,7 +247,7 @@ def save_placed_orders(df: pd.DataFrame, filepath: Path) -> None:
         "tp_order_id",     "tp_status",     "tp_filled_at",
     ]
     df[output_cols].to_csv(filepath, index=False)
-    print(f"💾 Updated {filepath} ({len(df)} rows)")
+    logger.info(f"💾 Updated {filepath} ({len(df)} rows)")
 
 
 def build_trade_log(df: pd.DataFrame, existing_trades: pd.DataFrame) -> pd.DataFrame:
@@ -316,12 +322,12 @@ def build_trade_log(df: pd.DataFrame, existing_trades: pd.DataFrame) -> pd.DataF
 def save_trade_log(new_trades: pd.DataFrame, filepath: Path) -> None:
     """Append new trades to 4_trades.csv, creating the file if needed."""
     if new_trades.empty:
-        print("No new completed trades to write.")
+        logger.info("✅ No new completed trades to write.")
         return
 
     write_header = not filepath.exists()
     new_trades.to_csv(filepath, mode="a", header=write_header, index=False)
-    print(f"📈 Wrote {len(new_trades)} new trade(s) to {filepath}")
+    logger.info(f"✅ Wrote {len(new_trades)} new trade(s) to {filepath}")
 
 
 # ---------------------------------------------------------------------------
@@ -360,8 +366,7 @@ def apply_cancellations_to_df(
         df.at[i, "tp_status"]        = "Cancelled"
         df.at[i, "tp_filled_at"]     = cancelled_at
 
-        print(f"🚫 {row['symbol']} marked Cancelled "
-              f"(Parent ID: {int(row['parent_order_id'])})")
+        logger.info(f"🚫 {row['symbol']} marked Cancelled. Parent ID: {int(row['parent_order_id'])}")
         cancelled_count += 1
 
     return df, cancelled_count
@@ -386,24 +391,24 @@ async def track_cancellations_async() -> None:
     """
     # 1. Reload placed orders fresh — track_orders_async may have updated the file
     if not PLACED_ORDERS_FILE.exists():
-        print(f"❌ {PLACED_ORDERS_FILE} not found.")
+        logger.error(f"❌ {PLACED_ORDERS_FILE} not found.")
         return
 
     df       = load_placed_orders(PLACED_ORDERS_FILE)
     df_active = get_active_rows(df)
 
     if df_active.empty:
-        print("✅ No active orders remaining — cancellation check skipped.")
+        logger.info("✅ No active orders remaining — cancellation check skipped.")
         return
 
-    print(f"🔍 Checking cancellations for {len(df_active)} active order(s)...")
+    logger.info(f"🔍 Checking cancellations for {len(df_active)} active order(s)...")
 
     # 2. Fetch all currently open orders from TWS
     ib = IB()
     try:
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
         open_trades = await ib.reqAllOpenOrdersAsync()
-        print(f"📡 Received {len(open_trades)} open order(s) from TWS.")
+        logger.info(f"📡 Received {len(open_trades)} open order(s) from TWS.")
     finally:
         ib.disconnect()
 
@@ -415,7 +420,7 @@ async def track_cancellations_async() -> None:
     df, cancelled_count = apply_cancellations_to_df(df, open_order_ids)
 
     if cancelled_count == 0:
-        print("✅ No cancellations detected.")
+        logger.info("✅ No cancellations detected.")
         return
 
     # 5. Save updated 3_placed_orders.csv
@@ -431,7 +436,7 @@ async def track_orders_async() -> None:
 
     # 1. Load placed orders
     if not PLACED_ORDERS_FILE.exists():
-        print(f"❌ {PLACED_ORDERS_FILE} not found.")
+        logger.error(f"❌ {PLACED_ORDERS_FILE} not found.")
         return
 
     df = load_placed_orders(PLACED_ORDERS_FILE)
@@ -440,15 +445,15 @@ async def track_orders_async() -> None:
     df_active = get_active_rows(df)
 
     if df_active.empty:
-        print("✅ All orders are already in a terminal state. Nothing to track.")
+        logger.info("✅ All orders are already in a terminal state. Nothing to track.")
         return
 
-    print(f"🔍 {len(df_active)} active order(s) to reconcile "
-          f"({len(df) - len(df_active)} historical).")
+
+    logger.info(f"🔍 {len(df_active)} active order(s) to reconcile ({len(df) - len(df_active)} historical).")
 
     # 3. Determine time filter from oldest active submitted_at
     time_filter = oldest_submitted_at(df_active)
-    print(f"⏱  Fetching executions from {time_filter} onwards...")
+    logger.info(f"⏱  Fetching executions from {time_filter} onwards...")
 
     # 4. Build order ID → row index lookup (active rows only)
     order_id_index = build_order_id_index(df_active)
@@ -458,7 +463,7 @@ async def track_orders_async() -> None:
     try:
         await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
         executions = await fetch_executions(ib, time_filter)
-        print(f"📡 Received {len(executions)} execution report(s) from TWS.")
+        logger.info(f"📡 Received {len(executions)} execution report(s) from TWS.")
     finally:
         ib.disconnect()
 
