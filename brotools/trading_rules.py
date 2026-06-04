@@ -1,3 +1,7 @@
+import logging 
+
+logger = logging.getLogger(__name__)
+
 def check_trading_window(df_data, start_time="09:30", end_time="10:00"):
     """Validates if the last candle is within the specified time window."""
     last_candle_time = df_data.index.max()
@@ -44,7 +48,7 @@ def check_candles_up(df_data, consecutive=3, start_rth="09:30", end_rth="16:00")
     # 4. Double-check that our first regular hours bar matches our start_rth time
     opening_bar_time = df_regular_hours.index[0].strftime("%H:%M")
     if opening_bar_time != start_rth:
-        print(f"Skipping: RTH started at {opening_bar_time} instead of {start_rth} for {most_recent_date}.")
+        logger.warning(f"⚠️  RTH opening bar time mismatch: Expected {start_rth}, but got {opening_bar_time} for {most_recent_date}. This may indicate missing pre-market data or a data quality issue.")
         return rule_name, False
     
     # 5. Slice the consecutive candles immediately AFTER the opening bar
