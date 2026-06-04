@@ -1,3 +1,4 @@
+import os
 import sys
 import asyncio
 import importlib
@@ -21,8 +22,13 @@ except (ModuleNotFoundError, AttributeError) as e:
     raise RuntimeError(f"❌ Could not load strategy '{module_name}': {e}")
 
 
+def create_folders_for_data():
+    # Create necessary folders for data storage
+    os.makedirs("DATA", exist_ok=True)
+
 def get_scan():
     configure_logging()
+    create_folders_for_data()
     with Strategy() as strategy:
         try:
             scan_result = asyncio.run(get_report_async(strategy))
@@ -40,6 +46,7 @@ def get_scan():
 
 def get_data() -> None:
     configure_logging()
+    create_folders_for_data()
     # Retreive price data for a list of tickers
     #TODO Add timeframe and back_days as parameters from Strategy class
     #tickers = load_tickers_from_results()
@@ -48,6 +55,7 @@ def get_data() -> None:
 
 def add_indicators() -> None:
     configure_logging()
+    create_folders_for_data()
     tickers = pd.read_csv("DATA/1_scan_results.csv")["symbol"].tolist()
     with Strategy() as strategy:
         for ticker in tickers:
