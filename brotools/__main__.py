@@ -106,12 +106,14 @@ def place_orders():
 def main():
     print("Hello, BroTools!")
     print("This is the main entry point of the application.")
-    print("Live trading not implemented, use commands:")
+    print("Manual pipeline commands:")
     print("  scan: get market scanner and save results")
     print("  data: get historical price data for tickers in scan results")
     print("  indicators: add technical indicators to price data")
     print("  signals: generate buy signals based on indicators and save to file")
     print("  orders: place orders for buy signals")
+    print("Live, event-driven session (Phases 1-7):")
+    print("  run_bot: run the persistent live trading session")
     
 if __name__ == "__main__":
     main()

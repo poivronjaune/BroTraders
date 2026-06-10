@@ -1,14 +1,25 @@
 import pandas as pd
-from ib_async import ScannerSubscription  
+from ib_async import ScannerSubscription
 
+from brotools.strategy_base import BaseStrategy
 from brotools.trading_indicators import prev_day_closing_bar, current_day_opening_bar
 from brotools.trading_rules import check_trading_window, check_gap_size, check_candles_up
 
-class Strategy:
+class Strategy(BaseStrategy):
     def __init__(self):
+        super().__init__()
         self.name = "Gap Rise Strategy"
         self.description = "Identifies stocks that have a significant price gap up at the market open, followed by green candles."
         self.gap_threshhold = 10
+
+        # --- Live-session window (Eastern time) ---
+        # The bot is launched at 09:25 and idles until session_start_time.
+        self.session_start_time = "09:30"   # run the scanner at the open
+        self.session_end_time   = "09:45"   # gap window closes -> shutdown
+        self.entry_cutoff_time  = "09:45"   # no new entries after the window
+        self.max_positions      = 3
+
+        # Kept for backwards compatibility with the legacy CLI inspection flow.
         self.active_start_time = "09:30"
         self.active_end_time = "09:45"
 
@@ -17,17 +28,6 @@ class Strategy:
             (check_gap_size, {"gap_threshold": 10.0}),
             (check_candles_up, {"consecutive": 3})  # Uses 09:30 and 16:00 by default for RTH
         ]
-
-
-    def __enter__(self):
-        # This runs when entering the 'with' block
-        print(f"Opening connection to {self.name}.")
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # This ALWAYS runs when leaving the 'with' block
-        print(f"Closing connection to {self.name} safely.")
-        # Return False to let any exceptions propagate normally
 
     def scanner(self):
         sub = ScannerSubscription()
@@ -107,9 +107,10 @@ class Strategy:
         conditions_trace["signal_close"] = float(last_candle["close"])
         conditions_trace["signal_volume"] = int(last_candle["volume"])
 
-
-
-
-
         return conditions_trace
-       
+
+    def is_session_done(self) -> bool:
+        """The gap window only allows a fixed number of entries. Once the bot
+        has emitted ``max_positions`` signals there is nothing left to do, so it
+        can shut down early (before ``session_end_time``)."""
+        return self._signals_emitted >= self.max_positions

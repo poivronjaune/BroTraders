@@ -21,7 +21,10 @@ from pathlib import Path
 
 from ib_async import IB, Stock, util, MarketOrder, LimitOrder, StopOrder
 
-from brotools.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
+from brotools.config import (
+    IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID,
+    CONNECT_RETRIES, CONNECT_DELAY,
+)
 from brotools.protocols import StrategyProtocol
 
 from typing import TYPE_CHECKING
@@ -58,6 +61,61 @@ PLACED_ORDERS_COLUMNS = [
     "sl_order_id",     "sl_status",     "sl_filled_at",
     "tp_order_id",     "tp_status",     "tp_filled_at",
 ]
+
+
+# ---------------------------------------------------------------------------
+# Connection helper
+# ---------------------------------------------------------------------------
+
+async def connect_with_retry(
+    ib: IB,
+    host: str = IBKR_HOST,
+    port: int = IBKR_PORT,
+    client_id: int = IBKR_CLIENT_ID,
+    retries: int = CONNECT_RETRIES,
+    delay: float = CONNECT_DELAY,
+) -> None:
+    """Connect to TWS with exponential back-off retries.
+
+    Raises the last connection error if all attempts fail.
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            await ib.connectAsync(host, port, clientId=client_id)
+            ib.disconnectedEvent += lambda: logger.warning("⚠️  TWS disconnected.")
+            logger.info("✅ Connected to TWS (attempt %d/%d)", attempt, retries)
+            return
+        except ConnectionRefusedError:
+            if attempt == retries:
+                raise
+            logger.warning(
+                "Connection refused — retrying in %.1fs (attempt %d/%d)",
+                delay, attempt, retries,
+            )
+            await asyncio.sleep(delay)
+            delay *= 2
+
+
+async def run_scanner_async(ib: IB, strategy: StrategyProtocol) -> pd.DataFrame:
+    """Run the strategy's scanner on an already-connected IB instance.
+
+    Used by the live bot (which owns a single persistent connection) and by
+    ``get_report_async`` (the standalone CLI command).
+    """
+    scanner = strategy.scanner()
+    scan_data = await ib.reqScannerDataAsync(scanner)
+
+    results = [
+        {
+            "rank":         d.rank,
+            "symbol":       d.contractDetails.contract.symbol,
+            "conId":        d.contractDetails.contract.conId,
+            "localSymbol":  d.contractDetails.contract.localSymbol,
+            "tradingClass": d.contractDetails.contract.tradingClass,
+        }
+        for d in scan_data
+    ]
+    return pd.DataFrame(results)
 
 
 # ---------------------------------------------------------------------------
@@ -211,23 +269,8 @@ async def get_report_async(strategy: StrategyProtocol) -> pd.DataFrame | None:
     df  = None
 
     try:
-        scanner = strategy.scanner()
-
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-
-        scan_data = await ib.reqScannerDataAsync(scanner)
-
-        results = [
-            {
-                "rank":         d.rank,
-                "symbol":       d.contractDetails.contract.symbol,
-                "conId":        d.contractDetails.contract.conId,
-                "localSymbol":  d.contractDetails.contract.localSymbol,
-                "tradingClass": d.contractDetails.contract.tradingClass,
-            }
-            for d in scan_data
-        ]
-        df = pd.DataFrame(results)
+        await connect_with_retry(ib)
+        df = await run_scanner_async(ib, strategy)
 
     except ConnectionRefusedError:
         logger.error(f"❌ Connection refused. Check TWS/Gateway - {IBKR_HOST}:{IBKR_PORT} and clientId={IBKR_CLIENT_ID}")
@@ -259,7 +302,7 @@ async def save_data_async(
     ib = IB()
 
     try:
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+        await connect_with_retry(ib)
 
         for ticker in tickers:
             try:
@@ -334,7 +377,7 @@ async def place_orders_async() -> None:
     placed_orders = []
 
     try:
-        await ib.connectAsync(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
+        await connect_with_retry(ib)
 
         for item in order_items:
             try:
