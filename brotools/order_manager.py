@@ -19,7 +19,7 @@ from pathlib import Path
 
 import asyncio
 import pandas as pd
-from ib_async import IB, Stock, LimitOrder, StopOrder
+from ib_async import IB, Stock, LimitOrder, StopOrder, MarketOrder
 
 from brotools.trade_signal import Signal
 
@@ -77,11 +77,15 @@ class OrderManager:
         contract = Stock(signal.symbol, "SMART", "USD")
         await self.ib.qualifyContractsAsync(contract)
 
-        # Limit entry at the signal bar's close; bracketed stop + target.
+        # Entry (limit at signal close, or market) + bracketed stop + target.
         # transmit=False on parent + stop so TWS holds the group until the
         # take-profit (transmit=True) arrives, then transmits atomically.
-        parent = LimitOrder("BUY", signal.quantity, signal.entry_price,
-                            tif="GTC", transmit=False)
+        if signal.entry_type == "MKT":
+            parent = MarketOrder("BUY", signal.quantity,
+                                 tif="GTC", transmit=False)
+        else:
+            parent = LimitOrder("BUY", signal.quantity, signal.entry_price,
+                                tif="GTC", transmit=False)
         stop = StopOrder("SELL", signal.quantity, signal.stop_price,
                         tif="GTC", transmit=False)
         target = LimitOrder("SELL", signal.quantity, signal.target_price,

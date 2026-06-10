@@ -43,6 +43,9 @@ class BaseStrategy(ABC):
         self.stop_loss_pct      = 0.98      # stop  = entry * 0.98 (2% below)
         self.take_profit_pct    = 1.05      # target = entry * 1.05 (5% above)
 
+        # --- Data feed ---
+        self.bar_size           = "1 min"   # IBKR barSizeSetting for the live feed
+
         # Internal counter used by the default ``is_session_done``/``on_bar``.
         self._signals_emitted = 0
 

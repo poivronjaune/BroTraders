@@ -62,7 +62,7 @@ class DataManager:
                     contract,
                     endDateTime="",
                     durationStr="2 D",
-                    barSizeSetting="1 min",
+                    barSizeSetting=self.strategy.bar_size,
                     whatToShow="TRADES",
                     useRTH=False,          # pre-market needed for gap detection
                     keepUpToDate=True,     # keep delivering live bars

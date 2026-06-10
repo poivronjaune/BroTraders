@@ -4,6 +4,7 @@ IBKR_PORT = 7497      # Trader Work Station (TWS)
 IBKR_CLIENT_ID = 0
 STRATEGY_FILE = "gap_rise.py"
 #STRATEGY_FILE = "stub_strategy.py"
+#STRATEGY_FILE = "break_and_bounce.py"
 
 # ---------------------------------------------------------------------------
 # Connection resilience (used by connect_with_retry)

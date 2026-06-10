@@ -22,3 +22,4 @@ class Signal:
     quantity: int         # number of shares
     reason: str           # human-readable description of why the signal fired
     signal_time: datetime  # timestamp of the triggering bar
+    entry_type: str = "LMT"  # "LMT" = limit entry at entry_price, "MKT" = market entry
