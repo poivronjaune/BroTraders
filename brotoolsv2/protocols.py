@@ -28,3 +28,5 @@ class Signal:
     reason: str
     signal_time: datetime
     quantity: int | None = None
+
+    

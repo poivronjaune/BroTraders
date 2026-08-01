@@ -1,4 +1,5 @@
 import logging 
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -61,3 +62,19 @@ def check_candles_up(df_data, consecutive=3, start_rth="09:30", end_rth="16:00")
     return rule_name, bool(is_valid)
 
 
+def check_vwap_oversold(df_data, threshold_pct=3.0, vwap_column="rth_vwap"):
+    """
+    Validates if the last close is at least threshold_pct below the
+    current RTH VWAP value. Requires df_data to already have the
+    vwap_column populated (via compute_session_vwap in add_indicators).
+    """
+    last_close = df_data["close"].iloc[-1]
+    last_vwap = df_data[vwap_column].iloc[-1]
+
+    if pd.isna(last_vwap) or last_vwap == 0:
+        return "vwap_oversold_threshold_reached", False
+
+    distance_pct = (last_vwap - last_close) / last_vwap * 100
+    is_valid = distance_pct >= threshold_pct
+
+    return "vwap_oversold_threshold_reached", is_valid
