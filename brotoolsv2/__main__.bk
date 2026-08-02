@@ -10,8 +10,6 @@ implemented yet - this is the scaffolding skeleton described in
 TODO/bot_upgrade_v2.md.
 """
 import random
-from ib_async import IB
-from brotoolsv2.config import IBKR_HOST, IBKR_PORT, IBKR_CLIENT_ID
 
 
 def generate_simulated_bar(iteration: int) -> dict:
@@ -39,21 +37,11 @@ def main() -> None:
     print("  - Would initialize watchlist, risk manager, order manager, trading log")
 
     # --- Phase 1b: IBKR Connectivity Check ---
-    #print("\n[PHASE 1b] IBKR Connectivity Check")
-    #print("  - Would connect to TWS at IBKR_HOST:IBKR_PORT using IBKR_CLIENT_ID")
-    #print("  - Would verify connection is live before proceeding")
-    #print("  - [SIMULATED] Connection check skipped - no real IBKR connection yet")
-    # --- Phase 1b: IBKR Connectivity Check ---
     print("\n[PHASE 1b] IBKR Connectivity Check")
-    ib = IB()
-    try:
-        ib.connect(IBKR_HOST, IBKR_PORT, clientId=IBKR_CLIENT_ID)
-        print(f"  - Connected to TWS at {IBKR_HOST}:{IBKR_PORT} (clientId={IBKR_CLIENT_ID})")
-        print(f"  - Connection live: {ib.isConnected()}")
-    except Exception as e:
-        print(f"  - Connection failed: {type(e).__name__}: {e}")
-        return
-    
+    print("  - Would connect to TWS at IBKR_HOST:IBKR_PORT using IBKR_CLIENT_ID")
+    print("  - Would verify connection is live before proceeding")
+    print("  - [SIMULATED] Connection check skipped - no real IBKR connection yet")
+
     # --- Phase 2: Strategy Discovery ---
     print("\n[PHASE 2] Strategy Discovery")
     print("  - Would scan brotoolsv2/strategies/ for Strategy classes")
@@ -81,23 +69,15 @@ def main() -> None:
         print("    [CHECK] Fill - would check for any order fill events to process")
 
     # --- Phase 7: Shutdown ---
-    #print("\n[PHASE 7] Shutdown")
-    #print("  - Would stop accepting new signals")
-    #print("  - Would NOT force-close open positions (per bot_upgrade_v2.md kill-switch decision)")
-    #print("  - Would flush any in-flight trades to the SQLite trading log")
-    #print("  - Would disconnect from TWS cleanly")
-    #print("\n" + "=" * 60)
-    #print("BroTraders v2 - Bot Session Ended")
-    #print("=" * 60)
-    
-    # --- Phase 7: Shutdown ---
     print("\n[PHASE 7] Shutdown")
     print("  - Would stop accepting new signals")
     print("  - Would NOT force-close open positions (per bot_upgrade_v2.md kill-switch decision)")
     print("  - Would flush any in-flight trades to the SQLite trading log")
-    if ib.isConnected():
-        ib.disconnect()
-        print("  - Disconnected from TWS.") 
+    print("  - Would disconnect from TWS cleanly")
+    print("\n" + "=" * 60)
+    print("BroTraders v2 - Bot Session Ended")
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()
