@@ -3,6 +3,8 @@ Archive/
 BKUP/
 DATA/
 LOGS/
+TMP/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
