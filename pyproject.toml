@@ -16,7 +16,9 @@ license = {text = "MIT"}
 dependencies = [
     # "/TWS API/source/pythonclient", # This installs protobuf, which is a dependency of ibapi
     "pandas",
-    "ib_async"
+    "ib_async",
+    "requests",
+    "urllib3"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
