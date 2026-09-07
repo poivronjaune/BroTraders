@@ -4,6 +4,7 @@ BKUP/
 DATA/
 LOGS/
 TMP/
+TESTS-TMP_FILES/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -42,6 +42,16 @@ class Watchlist:
         entry = self._entries.get(symbol)
         return entry.candidate_strategies if entry else set()
 
+    def get_candidate_symbols(self) -> tuple[str, ...]:
+        """Return all symbols currently flagged by at least one strategy."""
+        return tuple(
+            sorted(
+                symbol
+                for symbol, entry in self._entries.items()
+                if entry.candidate_strategies
+            )
+        )
+
     def is_locked(self, symbol: str) -> bool:
         """True if this symbol currently has a pending/open/closing position."""
         entry = self._entries.get(symbol)
